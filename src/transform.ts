@@ -31,29 +31,30 @@ export function dct(X: number[]) {
         for (let y = 0; y < 8; y++)
           sum += X[x * 8 + y] * cos((2 * x + 1) * i * pi_16) * cos((2 * y + 1) * j * pi_16)
       }
-      sum = 1 / 4 * C(i) * C(j) * sum
-      Y[i * 8 + j] = sum
+      Y[i * 8 + j] = 1 / 4 * C(i) * C(j) * sum
       sum = 0
     }
   }
+
   return Y
 }
 
-export function idct(X: number[]) {
+export function idct(Y: number[]) {
   const C = (x: number) => x === 0 ? one_sqrt2 : 1
-  const Y: number[] = []
+  const X: number[] = []
   for (let x = 0; x < 8; x++) {
     for (let y = 0; y < 8; y++) {
       let sum = 0
       for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++)
-          sum += C(i) * C(j) * X[i * 8 + j] * cos((2 * x + 1) * i * pi_16) * cos((2 * y + 1) * j * pi_16)
+          sum += C(i) * C(j) * Y[i * 8 + j] * cos((2 * x + 1) * i * pi_16) * cos((2 * y + 1) * j * pi_16)
       }
-      Y[x * 8 + y] = round(1 / 4 * sum)
+      X[x * 8 + y] = 1 / 4 * sum
       sum = 0
     }
   }
-  return Y
+
+  return X
 }
 
 export function aan(X: number[]) {
@@ -194,41 +195,36 @@ export function aan(X: number[]) {
   return X
 }
 
-export function sep(X: number[][]) {
-  const A: number[][] = []
+export function sep(X: number[]) {
+  const A: number[] = []
   for (let k = 0; k < 8; k++) {
     const c0 = k === 0 ? one_sqrt2 : 1
-    A[k] = []
     for (let n = 0; n < 8; n++)
-      A[k][n] = c0 * 0.5 * cos((2 * n + 1) * k * pi_16)
+      A[k * 8 + n] = c0 * 0.5 * cos((2 * n + 1) * k * pi_16)
   }
 
   return dot(A, dot(X, transpose(A)))
 }
 
-function transpose(matrix: number[][]) {
-  const transposed: number[][] = []
-  for (let rowIdx = 0; rowIdx < 8; rowIdx++) {
-    for (let colIdx = 0; colIdx < 8; colIdx++) {
-      transposed[colIdx] ||= []
-      transposed[colIdx][rowIdx] = matrix[rowIdx][colIdx]
-    }
+function transpose(X: number[]) {
+  const res: number[] = []
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++)
+      res[j * 8 + i] = X[i * 8 + j]
   }
-  return transposed
+  return res
 }
 
-function dot(X: number[][], Y: number[][]) {
-  const res: number[][] = []
-
-  for (let i = 0; i < 8; i++) {
-    const xRow = X[i % 8]
-    res[i] = []
-    for (let j = 0; j < 8; j++) {
-      const yCol = Y.map(row => row[j % 8])
-      const v = xRow.reduce((acc, cur, idx) => acc + cur * yCol[idx], 0)
-      res[i][j] = v
+function dot(X: number[], Y: number[]) {
+  const res = []
+  for (let r = 0; r < 8; r++) {
+    for (let i = 0; i < 8; i++) {
+      let sum = 0
+      for (let j = 0; j < 8; j++)
+        sum += X[r * 8 + j] * Y[j * 8 + i]
+      res.push(sum)
+      sum = 0
     }
   }
-
   return res
 }

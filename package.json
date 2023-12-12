@@ -3,7 +3,8 @@
   "type": "module",
   "module": "src/index.ts",
   "scripts": {
-    "test": "bun test",
+    "test": "bun test --watch",
+    "test:update":"bun test --update-snapshots",
     "lint": "eslint . --fix"
   },
   "peerDependencies": {

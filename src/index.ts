@@ -1,9 +1,10 @@
+import type { TaskResult } from 'tinybench'
 import { Bench } from 'tinybench'
-import Table from 'cli-table'
+import { printTable } from 'console-table-printer'
 import { readPpm } from './ppm'
 import { aan, dct, sep } from './transform'
 
-const bench = new Bench({ time: 0, iterations: 2 })
+const bench = new Bench({ time: 0, iterations: 1 })
 bench
   .add('aan', () => {
     const img = readPpm('src/assets/big.ppm')
@@ -31,8 +32,14 @@ bench
   })
 
 await bench.run()
-const table = new Table({ head: ['Task Name', 'Iterations', 'Average Time (s)', 'Margin'] })
-bench.table().forEach((r) => {
-  table.push([`${r?.['Task Name']}`, `${r?.Samples}`, `${r?.['Average Time (ns)'] ? r?.['Average Time (ns)'] / 1_000_000 : 0}`, `${r?.Margin}`])
-})
-console.log(table.toString())
+const tables = bench.table()
+const results = (bench.results as TaskResult[])
+  .map(({ min, max, mean, samples, totalTime }, i) => ({
+    name: tables[i]?.['Task Name'] ?? '',
+    iterations: samples.length,
+    min: Math.round(min * 1_000) / 1_000_000,
+    max: Math.round(max * 1_000) / 1_000_000,
+    mean: Math.round(mean * 1_000) / 1_000_000,
+    totalTime: Math.round(totalTime * 1_000) / 1_000_000,
+  }))
+printTable(results)

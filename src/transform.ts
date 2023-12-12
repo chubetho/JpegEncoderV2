@@ -4,11 +4,17 @@ const cos = Math.cos
 const pi = Math.PI
 const pi_16 = pi / 16
 
+const CosTable = new Float32Array(64)
+for (let i = 0; i < 8; i++) {
+  for (let j = 0; j < 8; j++)
+    CosTable[i * 8 + j] = cos((2 * i + 1) * j * pi_16)
+}
+
 const A = new Float32Array(64)
 for (let k = 0; k < 8; k++) {
   const c0 = k === 0 ? one_sqrt2 : 1
   for (let n = 0; n < 8; n++)
-    A[k * 8 + n] = c0 * 0.5 * cos((2 * n + 1) * k * pi_16)
+    A[k * 8 + n] = c0 * 0.5 * CosTable[n * 8 + k]
 }
 const At = transpose(A)
 
@@ -36,7 +42,7 @@ export function dct(X: Float32Array) {
       let sum = 0
       for (let x = 0; x < 8; x++) {
         for (let y = 0; y < 8; y++)
-          sum += X[x * 8 + y] * cos((2 * x + 1) * i * pi_16) * cos((2 * y + 1) * j * pi_16)
+          sum += X[x * 8 + y] * CosTable[x * 8 + i] * CosTable[y * 8 + j]
       }
       Y[i * 8 + j] = 1 / 4 * C(i) * C(j) * sum
       sum = 0
@@ -54,7 +60,7 @@ export function idct(Y: Float32Array) {
       let sum = 0
       for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++)
-          sum += C(i) * C(j) * Y[i * 8 + j] * cos((2 * x + 1) * i * pi_16) * cos((2 * y + 1) * j * pi_16)
+          sum += C(i) * C(j) * Y[i * 8 + j] * CosTable[x * 8 + i] * CosTable[y * 8 + j]
       }
       X[x * 8 + y] = 1 / 4 * sum
       sum = 0

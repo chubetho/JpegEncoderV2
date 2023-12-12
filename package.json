@@ -11,13 +11,10 @@
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
-  "dependencies": {
-    "@types/cli-table": "^0.3.4"
-  },
   "devDependencies": {
     "@antfu/eslint-config": "^2.4.5",
     "bun-types": "latest",
-    "cli-table": "^0.3.11",
+    "console-table-printer": "^2.11.2",
     "eslint": "^8.55.0",
     "tinybench": "^2.5.1"
   }

@@ -3,16 +3,22 @@
   "type": "module",
   "module": "src/index.ts",
   "scripts": {
+    "start": "bun src/index.ts",
     "test": "bun test --watch",
-    "test:update":"bun test --update-snapshots",
+    "test:update": "bun test --update-snapshots",
     "lint": "eslint . --fix"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
+  "dependencies": {
+    "@types/cli-table": "^0.3.4"
+  },
   "devDependencies": {
     "@antfu/eslint-config": "^2.4.5",
     "bun-types": "latest",
-    "eslint": "^8.55.0"
+    "cli-table": "^0.3.11",
+    "eslint": "^8.55.0",
+    "tinybench": "^2.5.1"
   }
 }

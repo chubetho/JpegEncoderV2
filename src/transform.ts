@@ -4,7 +4,7 @@ const cos = Math.cos
 const pi = Math.PI
 const pi_16 = pi / 16
 
-const A = Array(64)
+const A = new Float32Array(64)
 for (let k = 0; k < 8; k++) {
   const c0 = k === 0 ? one_sqrt2 : 1
   for (let n = 0; n < 8; n++)
@@ -28,9 +28,9 @@ const s5 = 1 / (4 * cos(5 * pi_16))
 const s6 = 1 / (4 * cos(6 * pi_16))
 const s7 = 1 / (4 * cos(7 * pi_16))
 
-export function dct(X: number[]) {
+export function dct(X: Float32Array) {
   const C = (x: number) => x === 0 ? one_sqrt2 : 1
-  const Y: number[] = []
+  const Y = new Float32Array(64)
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
       let sum = 0
@@ -46,9 +46,9 @@ export function dct(X: number[]) {
   return Y
 }
 
-export function idct(Y: number[]) {
+export function idct(Y: Float32Array) {
   const C = (x: number) => x === 0 ? one_sqrt2 : 1
-  const X: number[] = []
+  const X = new Float32Array(64)
   for (let x = 0; x < 8; x++) {
     for (let y = 0; y < 8; y++) {
       let sum = 0
@@ -64,7 +64,7 @@ export function idct(Y: number[]) {
   return X
 }
 
-export function aan(X: number[]) {
+export function aan(X: Float32Array) {
   for (let i = 0; i < 8; i++) {
     const b0 = X[i * 8 + 0] + X[i * 8 + 7]
     const b1 = X[i * 8 + 1] + X[i * 8 + 6]
@@ -202,12 +202,12 @@ export function aan(X: number[]) {
   return X
 }
 
-export function sep(X: number[]) {
+export function sep(X: Float32Array) {
   return dot(A, dot(X, At))
 }
 
-function transpose(X: number[]) {
-  const res = Array(64)
+function transpose(X: Float32Array) {
+  const res = new Float32Array(64)
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++)
       res[j * 8 + i] = X[i * 8 + j]
@@ -215,8 +215,8 @@ function transpose(X: number[]) {
   return res
 }
 
-function dot(X: number[], Y: number[]) {
-  const res = Array(64)
+function dot(X: Float32Array, Y: Float32Array) {
+  const res = new Float32Array(64)
   let index = 0
   for (let r = 0; r < 8; r++) {
     for (let i = 0; i < 8; i++) {

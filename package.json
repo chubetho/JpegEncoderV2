@@ -1,0 +1,17 @@
+{
+  "name": "jpegencoder",
+  "type": "module",
+  "module": "src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "lint": "eslint . --fix"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.4.5",
+    "bun-types": "latest",
+    "eslint": "^8.55.0"
+  }
+}

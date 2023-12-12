@@ -1,9 +1,16 @@
 const sqrt2 = Math.SQRT2
 const one_sqrt2 = 1 / sqrt2
 const cos = Math.cos
-const round = Math.round
 const pi = Math.PI
 const pi_16 = pi / 16
+
+const A = Array(64)
+for (let k = 0; k < 8; k++) {
+  const c0 = k === 0 ? one_sqrt2 : 1
+  for (let n = 0; n < 8; n++)
+    A[k * 8 + n] = c0 * 0.5 * cos((2 * n + 1) * k * pi_16)
+}
+const At = transpose(A)
 
 const m0 = cos(2 * pi_16)
 const m1 = cos(4 * pi_16)
@@ -196,18 +203,11 @@ export function aan(X: number[]) {
 }
 
 export function sep(X: number[]) {
-  const A: number[] = []
-  for (let k = 0; k < 8; k++) {
-    const c0 = k === 0 ? one_sqrt2 : 1
-    for (let n = 0; n < 8; n++)
-      A[k * 8 + n] = c0 * 0.5 * cos((2 * n + 1) * k * pi_16)
-  }
-
-  return dot(A, dot(X, transpose(A)))
+  return dot(A, dot(X, At))
 }
 
 function transpose(X: number[]) {
-  const res: number[] = []
+  const res = Array(64)
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++)
       res[j * 8 + i] = X[i * 8 + j]
@@ -216,13 +216,14 @@ function transpose(X: number[]) {
 }
 
 function dot(X: number[], Y: number[]) {
-  const res = []
+  const res = Array(64)
+  let index = 0
   for (let r = 0; r < 8; r++) {
     for (let i = 0; i < 8; i++) {
       let sum = 0
       for (let j = 0; j < 8; j++)
         sum += X[r * 8 + j] * Y[j * 8 + i]
-      res.push(sum)
+      res[index++] = sum
       sum = 0
     }
   }

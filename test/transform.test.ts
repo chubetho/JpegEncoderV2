@@ -19,7 +19,8 @@ it('dct', () => {
     return X1.reduce((acc, cur, idx) => acc + Math.abs(cur - X2[idx]), 0) / X1.length
   }
 
-  console.log(compare(idct(dct(O)), O))
-  console.log(compare(idct(sep(O)), O))
-  console.log(compare(idct(aan(structuredClone(O))), O))
+  const tolerance = 10 ** -10
+  expect(compare(idct(dct(O)), O)).toBeLessThan(tolerance)
+  expect(compare(idct(sep(O)), O)).toBeLessThan(tolerance)
+  expect(compare(idct(aan(structuredClone(O))), O)).toBeLessThan(tolerance)
 })

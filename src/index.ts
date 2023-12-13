@@ -1,3 +1,4 @@
+import { argv, exit } from 'node:process'
 import type { TaskResult } from 'tinybench'
 import { Bench } from 'tinybench'
 import { printTable } from 'console-table-printer'
@@ -5,10 +6,12 @@ import { sleepSync } from 'bun'
 import { readPpm } from './ppm'
 import { aan, dct, sep } from './transform'
 
-const file = 'src/assets/big.ppm'
+const [file, _iters, _sleep] = argv.splice(2)
 
-const sleep = 0
-const bench = new Bench({ time: 0, iterations: 1 })
+const iters = Number.parseInt(_iters)
+const sleep = Number.parseInt(_sleep)
+
+const bench = new Bench({ time: 0, iterations: Number.isNaN(iters) ? 1 : iters })
 bench
   .add('dct', () => {
     const img = readPpm(file)
@@ -17,7 +20,7 @@ bench
       dct(b.Cb)
       dct(b.Cr)
     })
-    sleepSync(sleep)
+    sleepSync(Number.isNaN(sleep) ? 0 : sleep)
   })
   .add('sep', () => {
     const img = readPpm(file)
@@ -26,7 +29,7 @@ bench
       sep(b.Cb)
       sep(b.Cr)
     })
-    sleepSync(sleep)
+    sleepSync(Number.isNaN(sleep) ? 0 : sleep)
   })
   .add('aan', () => {
     const img = readPpm(file)
@@ -35,22 +38,24 @@ bench
       aan(b.Cb)
       aan(b.Cr)
     })
-    sleepSync(sleep)
+    sleepSync(Number.isNaN(sleep) ? 0 : sleep)
   })
 
-await bench.run()
-const tables = bench.table()
-const results = (bench.results as TaskResult[])
-  .map(({ min, max, mean, samples, totalTime, p75, p99, p995, p999 }, i) => ({
-    name: tables[i]?.['Task Name'] ?? '',
-    iters: samples.length,
-    min: Math.round(min * 1_000 - sleep) / 1_000_000,
-    max: Math.round(max * 1_000 - sleep) / 1_000_000,
-    mean: Math.round(mean * 1_000 - sleep) / 1_000_000,
-    p75: Math.round(p75 * 1_000 - sleep) / 1_000_000,
-    p99: Math.round(p99 * 1_000 - sleep) / 1_000_000,
-    p995: Math.round(p995 * 1_000 - sleep) / 1_000_000,
-    p999: Math.round(p999 * 1_000 - sleep) / 1_000_000,
-    total: Math.round(totalTime * 1_000 - sleep) / 1_000_000,
-  }))
-printTable(results)
+bench.run().then(() => {
+  const tables = bench.table()
+  const round = (x: number) => Math.round((x - sleep) * 1_000) / 1_000_000
+  const results = (bench.results as TaskResult[])
+    .map(({ min, max, mean, samples, totalTime, p75, p99, p995, p999 }, i) => ({
+      name: tables[i]?.['Task Name'] ?? '',
+      iters: samples.length,
+      min: round(min),
+      max: round(max),
+      mean: round(mean),
+      p75: round(p75),
+      p99: round(p99),
+      p995: round(p995),
+      p999: round(p999),
+      total: round(totalTime),
+    }))
+  printTable(results)
+})

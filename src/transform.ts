@@ -1,6 +1,7 @@
 const sqrt2 = Math.SQRT2
 const one_sqrt2 = 1 / sqrt2
 const cos = Math.cos
+const sin = Math.sin
 const pi = Math.PI
 const pi_16 = pi / 16
 
@@ -234,4 +235,51 @@ function dot(X: Float32Array, Y: Float32Array) {
     }
   }
   return res
+}
+
+function foo(X: Float32Array) {
+  const a0 = 0
+  const a1 = 0
+  const a2 = 0
+  const a3 = 0
+  const a4 = 0
+  const a5 = 0
+  const a6 = 0
+  const a7 = 0
+
+  const b0 = a0 + a7
+  const b1 = a1 + a6
+  const b2 = a2 + a5
+  const b3 = a3 + a4
+  const b4 = a3 - a4
+  const b5 = a2 - a5
+  const b6 = a1 - a6
+  const b7 = a0 - a7
+
+  const c0 = b0 + b3
+  const c1 = b1 + b2
+  const c2 = b1 - b2
+  const c3 = b0 - b3
+  const c4 = b4 * cos(3 * pi / 8) + b7 * sin(3 * pi / 8)
+  const c5 = b5 * cos(pi / 8) + b6 * sin(pi / 8)
+  const c6 = -b5 * sin(pi / 8) + b6 * cos(pi / 8)
+  const c7 = -b4 * sin(3 * pi / 8) + b7 * cos(3 * pi / 8)
+
+  const d0 = c0 + c1
+  const d1 = c0 - c1
+  const d2 = c2 * sqrt2 * cos(pi / 8) + c3 * sqrt2 * sin(pi / 8)
+  const d3 = -c2 * sqrt2 * sin(pi / 8) + c3 * sqrt2 * cos(pi / 8)
+  const d4 = c4 + c6
+  const d5 = c7 - c5
+  const d6 = c4 - c6
+  const d7 = c7 - c5
+
+  const e0 = d0
+  const e1 = d1
+  const e2 = d2
+  const e3 = d3
+  const e4 = d7 - d4
+  const e5 = d5 * sqrt2
+  const e6 = d6 * sqrt2
+  const e7 = d7 + d4
 }

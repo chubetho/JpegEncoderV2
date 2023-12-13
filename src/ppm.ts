@@ -10,7 +10,10 @@ export function readPpm(path: string) {
   const image = new Uint8Array(imageWidth * imageHeight * 3)
   let index = 0
   for (const line of rest) {
-    const row = line.trim().split(/\s+/).map(Number)
+    const trim = line.trim()
+    if (trim[0] === '#')
+      continue
+    const row = trim.split(/\s+/).map(Number)
     for (let i = 0; i < row.length; i++)
       image[index++] = row[i]
   }
@@ -26,6 +29,7 @@ export function readPpm(path: string) {
     Cr: new Float32Array(64),
   }))
 
+  const clamp = (x: number) => x < -128 ? -128 : x > 127 ? 127 : x
   for (let h = 0; h < imageHeight; h++) {
     const blockRow = ~~(h / 8)
     const pixelRow = h % 8
@@ -48,9 +52,9 @@ export function readPpm(path: string) {
       const cb = -0.1687 * r + -0.3312 * g + 0.5 * b
       const cr = 0.5 * r + -0.4186 * g + -0.0813 * b
 
-      blocks[blockIndex].Y[pixelIndex] = y
-      blocks[blockIndex].Cb[pixelIndex] = cb
-      blocks[blockIndex].Cr[pixelIndex] = cr
+      blocks[blockIndex].Y[pixelIndex] = clamp(y)
+      blocks[blockIndex].Cb[pixelIndex] = clamp(cb)
+      blocks[blockIndex].Cr[pixelIndex] = clamp(cr)
     }
   }
 

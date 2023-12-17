@@ -9,13 +9,14 @@ export function readPpm(path: string) {
 
   const image = new Uint8Array(imageWidth * imageHeight * 3)
   let index = 0
-  for (const line of rest) {
-    const trim = line.trim()
+
+  for (let l = 0; l < rest.length; l++) {
+    const trim = rest[l].trim()
     if (trim[0] === '#')
       continue
-    const row = trim.split(/\s+/).map(Number)
+    const row = trim.split(' ').filter(Boolean)
     for (let i = 0; i < row.length; i++)
-      image[index++] = row[i]
+      image[index++] = Number.parseInt(row[i])
   }
 
   const blockHeight = ~~((imageHeight + 7) / 8)

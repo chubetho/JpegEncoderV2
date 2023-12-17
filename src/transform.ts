@@ -1,8 +1,6 @@
-const sqrt2 = Math.SQRT2
-const one_sqrt2 = 1 / sqrt2
+const one_sqrt2 = 0.707106781
 const cos = Math.cos
-const pi = Math.PI
-const pi_16 = pi / 16
+const pi_16 = 0.196349541
 
 const CosTable = new Float32Array(64)
 for (let i = 0; i < 8; i++) {
@@ -13,26 +11,27 @@ for (let i = 0; i < 8; i++) {
 const A = new Float32Array(64)
 for (let k = 0; k < 8; k++) {
   const c0 = k === 0 ? one_sqrt2 : 1
+  const tmp = k * 8
   for (let n = 0; n < 8; n++)
-    A[k * 8 + n] = c0 * 0.5 * CosTable[n * 8 + k]
+    A[tmp + n] = c0 * 0.5 * CosTable[n * 8 + k]
 }
 const At = transpose(A)
 
-const m0 = cos(2 * pi_16)
-const m1 = cos(4 * pi_16)
-const m5 = cos(6 * pi_16)
+const m0 = 0.923879532 // cos(2 * pi_16)
+const m1 = 0.707106780 // cos(4 * pi_16)
+const m5 = 0.382683431 // cos(6 * pi_16)
 const m2 = m0 - m5
 const m3 = m1
 const m4 = m0 + m5
 
-const s0 = 0.5 * one_sqrt2
-const s1 = 1 / (4 * cos(1 * pi_16))
-const s2 = 1 / (4 * cos(2 * pi_16))
-const s3 = 1 / (4 * cos(3 * pi_16))
-const s4 = 1 / (4 * cos(4 * pi_16))
-const s5 = 1 / (4 * cos(5 * pi_16))
-const s6 = 1 / (4 * cos(6 * pi_16))
-const s7 = 1 / (4 * cos(7 * pi_16))
+const s0 = 0.3535533905 // 0.5 * one_sqrt2
+const s1 = 0.2548977895 // 1 / (4 * cos(1 * pi_16))
+const s2 = 0.2705980501 // 1 / (4 * cos(2 * pi_16))
+const s3 = 0.3006724435 // 1 / (4 * cos(3 * pi_16))
+const s4 = 0.3535533908 // 1 / (4 * cos(4 * pi_16))
+const s5 = 0.4499881120 // 1 / (4 * cos(5 * pi_16))
+const s6 = 0.6532814838 // 1 / (4 * cos(6 * pi_16))
+const s7 = 1.2814577306 // 1 / (4 * cos(7 * pi_16))
 
 export function dct(X: Float32Array) {
   const C = (x: number) => x === 0 ? one_sqrt2 : 1
@@ -72,14 +71,15 @@ export function idct(Y: Float32Array) {
 
 export function aan(X: Float32Array) {
   for (let i = 0; i < 8; i++) {
-    const b0 = X[i * 8 + 0] + X[i * 8 + 7]
-    const b1 = X[i * 8 + 1] + X[i * 8 + 6]
-    const b2 = X[i * 8 + 2] + X[i * 8 + 5]
-    const b3 = X[i * 8 + 3] + X[i * 8 + 4]
-    const b4 = X[i * 8 + 3] - X[i * 8 + 4]
-    const b5 = X[i * 8 + 2] - X[i * 8 + 5]
-    const b6 = X[i * 8 + 1] - X[i * 8 + 6]
-    const b7 = X[i * 8 + 0] - X[i * 8 + 7]
+    const tmp = i * 8
+    const b0 = X[tmp + 0] + X[tmp + 7]
+    const b1 = X[tmp + 1] + X[tmp + 6]
+    const b2 = X[tmp + 2] + X[tmp + 5]
+    const b3 = X[tmp + 3] + X[tmp + 4]
+    const b4 = X[tmp + 3] - X[tmp + 4]
+    const b5 = X[tmp + 2] - X[tmp + 5]
+    const b6 = X[tmp + 1] - X[tmp + 6]
+    const b7 = X[tmp + 0] - X[tmp + 7]
 
     const c0 = b0 + b3
     const c1 = b1 + b2
@@ -139,14 +139,14 @@ export function aan(X: Float32Array) {
   }
 
   for (let i = 0; i < 8; i++) {
-    const b0 = X[0 * 8 + i] + X[7 * 8 + i]
-    const b1 = X[1 * 8 + i] + X[6 * 8 + i]
-    const b2 = X[2 * 8 + i] + X[5 * 8 + i]
-    const b3 = X[3 * 8 + i] + X[4 * 8 + i]
-    const b4 = X[3 * 8 + i] - X[4 * 8 + i]
-    const b5 = X[2 * 8 + i] - X[5 * 8 + i]
-    const b6 = X[1 * 8 + i] - X[6 * 8 + i]
-    const b7 = X[0 * 8 + i] - X[7 * 8 + i]
+    const b0 = X[0 + i] + X[56 + i]
+    const b1 = X[8 + i] + X[48 + i]
+    const b2 = X[16 + i] + X[40 + i]
+    const b3 = X[24 + i] + X[32 + i]
+    const b4 = X[24 + i] - X[32 + i]
+    const b5 = X[16 + i] - X[40 + i]
+    const b6 = X[8 + i] - X[48 + i]
+    const b7 = X[0 + i] - X[56 + i]
 
     const c0 = b0 + b3
     const c1 = b1 + b2
@@ -195,14 +195,14 @@ export function aan(X: Float32Array) {
     const g6 = f5 - f6
     const g7 = f7 - f4
 
-    X[0 * 8 + i] = g0 * s0
-    X[1 * 8 + i] = g5 * s1
-    X[2 * 8 + i] = g2 * s2
-    X[3 * 8 + i] = g7 * s3
-    X[4 * 8 + i] = g1 * s4
-    X[5 * 8 + i] = g4 * s5
-    X[6 * 8 + i] = g3 * s6
-    X[7 * 8 + i] = g6 * s7
+    X[0 + i] = g0 * s0
+    X[8 + i] = g5 * s1
+    X[16 + i] = g2 * s2
+    X[24 + i] = g7 * s3
+    X[32 + i] = g1 * s4
+    X[40 + i] = g4 * s5
+    X[48 + i] = g3 * s6
+    X[56 + i] = g6 * s7
   }
 
   return X
@@ -215,8 +215,9 @@ export function sep(X: Float32Array) {
 function transpose(X: Float32Array) {
   const res = new Float32Array(64)
   for (let i = 0; i < 8; i++) {
+    const tmp = i * 8
     for (let j = 0; j < 8; j++)
-      res[j * 8 + i] = X[i * 8 + j]
+      res[j * 8 + i] = X[tmp + j]
   }
   return res
 }
@@ -227,8 +228,9 @@ function dot(X: Float32Array, Y: Float32Array) {
   for (let r = 0; r < 8; r++) {
     for (let i = 0; i < 8; i++) {
       let sum = 0
+      const tmp = r * 8
       for (let j = 0; j < 8; j++)
-        sum += X[r * 8 + j] * Y[j * 8 + i]
+        sum += X[tmp + j] * Y[j * 8 + i]
       res[index++] = sum
       sum = 0
     }

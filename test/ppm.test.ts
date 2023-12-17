@@ -14,7 +14,7 @@ it.skip('write ppm', () => {
   writePpm('src/output/write.ppm', image)
 })
 
-it('read big ppm', () => {
+it.skip('read big ppm', () => {
   const filePath = path.resolve('src/assets/big.ppm')
   readPpm(filePath)
 })

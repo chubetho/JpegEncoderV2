@@ -7,6 +7,12 @@ export function readPpm(path: string) {
   const [imageWidth, imageHeight] = size.trim().split(' ').map(Number)
   const maxColor = Number.parseInt(_maxColor)
 
+  if (format !== 'P3')
+    throw new Error ('Invalid ppm')
+
+  if (maxColor !== 255)
+    throw new Error ('Invalid ppm')
+
   const image = new Uint8Array(imageWidth * imageHeight * 3)
   let index = 0
 
@@ -14,9 +20,17 @@ export function readPpm(path: string) {
     const trim = rest[l].trim()
     if (trim[0] === '#')
       continue
-    const row = trim.split(' ').filter(Boolean)
-    for (let i = 0; i < row.length; i++)
-      image[index++] = Number.parseInt(row[i])
+
+    const row = trim.split(' ')
+    for (let i = 0; i < row.length; i++) {
+      if (!row[i])
+        continue
+      const v = Number.parseInt(row[i])
+      if (Number.isNaN(v) || v < 0 || v > maxColor)
+        throw new Error ('Invalid ppm')
+
+      image[index++] = v
+    }
   }
 
   const blockHeight = ~~((imageHeight + 7) / 8)

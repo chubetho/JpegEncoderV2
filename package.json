@@ -15,8 +15,6 @@
   "devDependencies": {
     "@antfu/eslint-config": "^2.4.5",
     "bun-types": "latest",
-    "console-table-printer": "^2.11.2",
-    "eslint": "^8.55.0",
-    "tinybench": "^2.5.1"
+    "eslint": "^8.55.0"
   }
 }

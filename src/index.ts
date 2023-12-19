@@ -10,6 +10,8 @@ const fns = [
   { name: 'dct', fn: dct },
 ]
 
+console.log(`time: ${time / 1000}s\n============\n`)
+
 for (const x of fns)
   await fn(x)
 
@@ -20,7 +22,7 @@ function fn(args: typeof fns[0]) {
     const id = setInterval(() => {
       if (stop) {
         clearInterval(id)
-        console.log(args.name, Math.round(time / count) / 1_000, 'ms')
+        console.log(`${args.name} ${Math.round(time / count) / 1_000}s`)
         resolve(undefined)
       }
       else {

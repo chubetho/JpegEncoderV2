@@ -2,15 +2,15 @@ import { argv } from 'node:process'
 import { readPpm } from './ppm'
 import { aan, dct, sep } from './transform'
 
-const [file, _time, ..._] = argv.splice(2)
-const time = Number.isNaN(Number.parseInt(_time)) ? 10_000 : Number.parseInt(_time)
+const [file, _d, ..._] = argv.splice(2)
+const duration = Number.isNaN(Number.parseInt(_d)) ? 10_000 : Number.parseInt(_d)
 const fns = [
   { name: 'aan', fn: aan },
   { name: 'sep', fn: sep },
   { name: 'dct', fn: dct },
 ]
 
-console.log(`time: ${time / 1000}s\n============\n`)
+console.log(`duration: ${duration / 1000}s\n==============\n`)
 
 for (const x of fns)
   await fn(x)
@@ -22,7 +22,7 @@ function fn(args: typeof fns[0]) {
     const id = setInterval(() => {
       if (stop) {
         clearInterval(id)
-        console.log(`${args.name} ${Math.round(time / count) / 1_000}s`)
+        console.log(`${args.name} ${Math.round(duration / count) / 1_000}s (${count} times)`)
         resolve(undefined)
       }
       else {
@@ -38,6 +38,6 @@ function fn(args: typeof fns[0]) {
 
     setTimeout(() => {
       stop = true
-    }, time)
+    }, duration)
   })
 }

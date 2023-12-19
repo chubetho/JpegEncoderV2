@@ -1,3 +1,22 @@
+const one_sqrt2 = 0.707106781
+const cos = Math.cos
+const pi_16 = 0.196349541
+
+const CosTable = new Float32Array(64)
+for (let i = 0; i < 8; i++) {
+  for (let j = 0; j < 8; j++)
+    CosTable[i * 8 + j] = cos((2 * i + 1) * j * pi_16)
+}
+
+const A = new Float32Array(64)
+for (let k = 0; k < 8; k++) {
+  const c0 = k === 0 ? one_sqrt2 : 1
+  const tmp = k * 8
+  for (let n = 0; n < 8; n++)
+    A[tmp + n] = c0 * 0.5 * CosTable[n * 8 + k]
+}
+const At = transpose(A)
+
 const m0 = 0.923879532 // cos(2 * pi_16)
 const m1 = 0.707106780 // cos(4 * pi_16)
 const m5 = 0.382683431 // cos(6 * pi_16)
@@ -13,6 +32,42 @@ const s4 = 0.3535533908 // 1 / (4 * cos(4 * pi_16))
 const s5 = 0.4499881120 // 1 / (4 * cos(5 * pi_16))
 const s6 = 0.6532814838 // 1 / (4 * cos(6 * pi_16))
 const s7 = 1.2814577306 // 1 / (4 * cos(7 * pi_16))
+
+export function dct(X: Float32Array) {
+  const C = (x: number) => x === 0 ? one_sqrt2 : 1
+  const Y = new Float32Array(64)
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      let sum = 0
+      for (let x = 0; x < 8; x++) {
+        for (let y = 0; y < 8; y++)
+          sum += X[x * 8 + y] * CosTable[x * 8 + i] * CosTable[y * 8 + j]
+      }
+      Y[i * 8 + j] = 1 / 4 * C(i) * C(j) * sum
+      sum = 0
+    }
+  }
+
+  return Y
+}
+
+export function idct(Y: Float32Array) {
+  const C = (x: number) => x === 0 ? one_sqrt2 : 1
+  const X = new Float32Array(64)
+  for (let x = 0; x < 8; x++) {
+    for (let y = 0; y < 8; y++) {
+      let sum = 0
+      for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++)
+          sum += C(i) * C(j) * Y[i * 8 + j] * CosTable[x * 8 + i] * CosTable[y * 8 + j]
+      }
+      X[x * 8 + y] = 1 / 4 * sum
+      sum = 0
+    }
+  }
+
+  return X
+}
 
 export function aan(X: Float32Array) {
   for (let i = 0; i < 8; i++) {
@@ -151,6 +206,36 @@ export function aan(X: Float32Array) {
   }
 
   return X
+}
+
+export function sep(X: Float32Array) {
+  return dot(A, dot(X, At))
+}
+
+function transpose(X: Float32Array) {
+  const res = new Float32Array(64)
+  for (let i = 0; i < 8; i++) {
+    const tmp = i * 8
+    for (let j = 0; j < 8; j++)
+      res[j * 8 + i] = X[tmp + j]
+  }
+  return res
+}
+
+function dot(X: Float32Array, Y: Float32Array) {
+  const res = new Float32Array(64)
+  let index = 0
+  for (let r = 0; r < 8; r++) {
+    for (let i = 0; i < 8; i++) {
+      let sum = 0
+      const tmp = r * 8
+      for (let j = 0; j < 8; j++)
+        sum += X[tmp + j] * Y[j * 8 + i]
+      res[index++] = sum
+      sum = 0
+    }
+  }
+  return res
 }
 
 /* eslint-disable */

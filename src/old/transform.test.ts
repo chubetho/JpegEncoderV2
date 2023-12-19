@@ -1,5 +1,5 @@
 import { expect, it } from 'bun:test'
-import { aan, dct, idct, sep } from '../src/transform'
+import { aan, dct, idct, sep } from './transform'
 
 it('dct', () => {
   /* eslint-disable */

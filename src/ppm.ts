@@ -39,9 +39,9 @@ export function readPpm(path: string) {
     R: new Uint8Array(64),
     G: new Uint8Array(64),
     B: new Uint8Array(64),
-    Y: new Float32Array(64),
-    Cb: new Float32Array(64),
-    Cr: new Float32Array(64),
+    Y: new Int32Array(64),
+    Cb: new Int32Array(64),
+    Cr: new Int32Array(64),
   }))
 
   const clamp = (x: number) => x < -128 ? -128 : x > 127 ? 127 : x

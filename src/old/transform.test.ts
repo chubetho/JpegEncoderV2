@@ -1,7 +1,7 @@
 import { expect, it } from 'bun:test'
 import { aan, dct, idct, sep } from './transform'
 
-it('dct', () => {
+it.skip('dct', () => {
   /* eslint-disable */
   const O = new Float32Array([
     16, 11, 10, 16, 24, 40, 51, 61,

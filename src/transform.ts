@@ -1,3 +1,5 @@
+import { qTableC, qTableY } from './constants'
+
 const m0 = 0.923879532 // cos(2 * pi_16)
 const m1 = 0.707106780 // cos(4 * pi_16)
 const m5 = 0.382683431 // cos(6 * pi_16)
@@ -14,7 +16,7 @@ const s5 = 0.4499881120 // 1 / (4 * cos(5 * pi_16))
 const s6 = 0.6532814838 // 1 / (4 * cos(6 * pi_16))
 const s7 = 1.2814577306 // 1 / (4 * cos(7 * pi_16))
 
-export function aan(X: Float32Array) {
+export function dct(X: Int32Array) {
   for (let i = 0; i < 8; i++) {
     const tmp = i * 8
     const b0 = X[tmp + 0] + X[tmp + 7]
@@ -153,29 +155,17 @@ export function aan(X: Float32Array) {
   return X
 }
 
+export function dqtY(X: Int32Array) {
+  for (let i = 0; i < 64; i++)
+    X[i] = X[i] / qTableY[i]
+}
+
+export function dqtC(X: Int32Array) {
+  for (let i = 0; i < 64; i++)
+    X[i] = X[i] / qTableC[i]
+}
+
 /* eslint-disable */
-const qTableY = [
-  16, 11, 10, 16, 24, 40, 51, 61,
-  12, 12, 14, 19, 26, 58, 60, 55,
-  14, 13, 16, 24, 40, 57, 69, 56,
-  14, 17, 22, 29, 51, 87, 80, 62,
-  18, 22, 37, 56, 68, 109, 103, 77,
-  24, 35, 55, 64, 81, 104, 113, 92,
-  49, 64, 78, 87, 103, 121, 120, 101,
-  72, 92, 95, 98, 112, 100, 103, 99
-]
-
-const qTableC = [
-  17, 18, 24, 47, 99, 99, 99, 99,
-  18, 21, 26, 66, 99, 99, 99, 99,
-  24, 26, 56, 99, 99, 99, 99, 99,
-  47, 66, 99, 99, 99, 99, 99, 99,
-  99, 99, 99, 99, 99, 99, 99, 99,
-  99, 99, 99, 99, 99, 99, 99, 99,
-  99, 99, 99, 99, 99, 99, 99, 99,
-  99, 99, 99, 99, 99, 99, 99, 99
-]
-
 const qTableY__Nikon_Coolpix_2500 = [
   2, 1, 1, 1, 1, 1, 2, 1,
   1, 1, 2, 2, 2, 2, 2, 4,

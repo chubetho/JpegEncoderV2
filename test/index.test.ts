@@ -21,7 +21,7 @@ it('foo', () => {
     dct(b.Cr)
     dqtC(b.Cr)
   }
-  console.log(img)
+  const huffmanData = getHuffmanData(img)
 
   const { data, writeByte, writeWord } = useStream()
 
@@ -95,10 +95,10 @@ it('foo', () => {
   writeHuffmanTable(1, 1, acTableC)
 
   // SOS
-  writeByte(0xFFDA)
+  writeWord(0xFFDA)
   writeWord(12)
   writeByte(3)
-  for (let i = 1; i <= 3; ++i) {
+  for (let i = 1; i <= 3; i++) {
     writeByte(i)
     writeByte(i === 1 ? 0x00 : 0x11)
   }
@@ -107,9 +107,7 @@ it('foo', () => {
   writeByte(0)
 
   // ECS
-  const huffmanData = getHuffmanData(img)
   data.push(...huffmanData)
-  console.log(huffmanData)
 
   // EOI
   writeByte(0xFFD9)

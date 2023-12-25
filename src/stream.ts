@@ -13,8 +13,8 @@ export function useStream() {
   }
 
   function writeBits(v: number, length: number) {
-    for (let i = length - 1; i >= 0; i--)
-      writeBit((v >> i) & 1)
+    for (let i = 1; i <= length; i++)
+      writeBit((v >> (length - i)) & 1)
   }
 
   function writeByte(v: number) {

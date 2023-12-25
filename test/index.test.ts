@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer'
 import { expect, it } from 'bun:test'
 import { readPpm } from '../src/ppm'
 import { dct, dqtC, dqtY } from '../src/transform'
-import { generateCodes, getBitLength, getCode, getHuffmanData } from '../src/huffman'
+import { generateCodes, getBitLength, getCode } from '../src/huffman'
 import { acTableC, acTableY, acTables, dcTableC, dcTableY, dcTables, qTableC, qTableY, zigzag } from '../src/constants'
 import { useStream } from '../src/stream'
 
@@ -21,9 +21,7 @@ it('foo', () => {
     dct(b.Cr)
     dqtC(b.Cr)
   }
-  const huffmanData = getHuffmanData(img)
-
-  const { data, writeByte, writeWord } = useStream()
+  const { data, writeByte, writeWord, writeBits } = useStream()
 
   // SOI
   writeWord(0xFFD8)
@@ -37,10 +35,10 @@ it('foo', () => {
   writeByte(0x46) // I
   writeByte(0)
   writeByte(1)
-  writeByte(1)
+  writeByte(2)
   writeByte(0)
-  writeWord(1)
-  writeWord(1)
+  writeWord(100)
+  writeWord(100)
   writeByte(0)
   writeByte(0)
 
@@ -107,96 +105,103 @@ it('foo', () => {
   writeByte(0)
 
   // ECS
-  data.push(...huffmanData)
+  const dcDiffs = [0, 0, 0]
 
-  // EOI
-  writeByte(0xFFD9)
-
-  writeFileSync('src/output/test.jpg', Buffer.from(data))
-})
-
-it.skip('bar', () => {
-  /* eslint-disable */
-  const img = Int32Array.from([
-    47, 18, 13, 16, 41, 90, 47, 27,
-    62, 42, 35, 39, 66, 90, 41, 26,
-    71, 55, 56, 67, 55, 40, 22, 39,
-    53, 60, 63, 50, 48, 25, 37, 87,
-    31, 27, 33, 27, 37, 50, 81, 147,
-    54, 31, 33, 46, 58, 104, 144, 179,
-    76, 70, 71, 91, 118, 151, 176, 184,
-    102, 105, 115, 124, 135, 168, 173, 181
-  ])
-
-  const qTable = [
-    50, 50, 50, 50, 50, 50, 50, 50,
-    50, 50, 50, 50, 50, 50, 50, 50,
-    50, 50, 50, 50, 50, 50, 50, 50,
-    50, 50, 50, 50, 50, 50, 50, 50,
-    50, 50, 50, 50, 50, 50, 50, 50,
-    50, 50, 50, 50, 50, 50, 50, 50,
-    50, 50, 50, 50, 50, 50, 50, 50,
-    50, 50, 50, 50, 50, 50, 50, 50
-  ]
-
-  const zigzag = [
-    0, 1, 8, 16, 9, 2, 3, 10,
-    17, 24, 32, 25, 18, 11, 4, 5,
-    12, 19, 26, 33, 40, 48, 41, 34,
-    27, 20, 13, 6, 7, 14, 21, 28,
-    35, 42, 49, 56, 57, 50, 43, 36,
-    29, 22, 15, 23, 30, 37, 44, 51,
-    58, 59, 52, 45, 38, 31, 39, 46,
-    53, 60, 61, 54, 47, 55, 62, 63
-  ]
-  /* eslint-enable */
-
-  function dqt(X: Int32Array) {
-    for (let i = 0; i < 64; i++)
-      X[i] = X[i] / qTable[i]
+  for (let i = 0; i < 3; i++) {
+    if (!dcTables[i].set) {
+      generateCodes(dcTables[i])
+      dcTables[i].set = true
+    }
+    if (!acTables[i].set) {
+      generateCodes(acTables[i])
+      acTables[i].set = true
+    }
   }
 
-  const coeff = dct(img).map(x => Math.round(x))
-  dqt(coeff)
-  const quan = coeff.map(x => Math.round(x))
-  const result = { dc: [] as number[], ac: [] as number[] }
-  zigzag.forEach((cur, idx) => {
-    (idx === 0 ? result.dc : result.ac).push(quan[cur])
-  })
-  const tmp1 = [57, 45, 0, 0, 0, 0, 23, 0, -30, -16, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  for (let b = 0; b < img.blocks.length; b++) {
+    const block = img.blocks[b]
+    for (let c = 0; c < 3; c++) {
+      const component = c === 0 ? block.Y : c === 1 ? block.Cb : block.Cr
+      // DC
+      let coeff = component[0] - dcDiffs[c]
+      dcDiffs[c] = component[0]
 
-  const tmp2 = [57, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 895, 0, 0, 0, 0]
-
-  function ac(arr: number[]) {
-    const result: [number, number][] = []
-    let count = 0
-
-    for (let idx = 0; idx < arr.length; idx++) {
-      const cur = arr[idx]
-      if (cur) {
-        result.push([count, cur])
-        count = 0
+      let coeffLength = getBitLength(Math.abs(coeff))
+      if (coeffLength > 11) {
+        console.log('dc coefficient length > 11')
+        return
       }
-      else {
-        count += 1
-        if (count === 16) {
-          result.push([15, 0])
-          count = 0
+      if (coeff < 0)
+        coeff += (1 << coeffLength) - 1
+
+      const dcCode = getCode(dcTables[c], coeffLength)
+      if (!dcCode) {
+        console.log('invalid dc')
+        return
+      }
+      writeBits(dcCode.code, dcCode.codelength)
+      writeBits(coeff, coeffLength)
+
+      // AC
+      for (let i = 1; i < 64; i++) {
+        let count = 0
+        while (i < 64 && component[zigzag[i]] === 0) {
+          count += 1
+          i += 1
         }
-      }
 
-      if (idx === 62 && count) {
-        while (result.length > 0 && result[result.length - 1][1] === 0)
-          result.pop()
+        if (i === 64) {
+          const acCode = getCode(acTables[c], 0x00)
+          if (!acCode) {
+            console.log('invalid ac')
+            return
+          }
+          writeBits(acCode.code, acCode.codelength)
+          continue
+        }
 
-        result.push([0, 0])
-        count = 0
+        while (count >= 16) {
+          const acCode = getCode(acTables[c], 0xF0)
+          if (!acCode) {
+            console.log('invalid ac')
+            return
+          }
+          writeBits(acCode.code, acCode.codelength)
+          count -= 16
+        }
+
+        // find coeff length
+        coeff = component[zigzag[i]]
+        coeffLength = getBitLength(Math.abs(coeff))
+        if (coeffLength > 10) {
+          console.log('ac coefficient length > 10')
+          return
+        }
+
+        if (coeff < 0)
+          coeff += (1 << coeffLength) - 1
+
+        // find symbol in table
+        const symbol = count << 4 | coeffLength
+        const symbolCode = getCode(acTables[c], symbol)
+        if (!symbolCode) {
+          console.log('invalid ac')
+          return
+        }
+
+        writeBits(symbolCode.code, symbolCode.codelength)
+        writeBits(coeff, coeffLength)
       }
     }
-
-    return result
   }
 
-  console.log(ac(tmp1))
-  console.log(ac(tmp2))
+  // EOI
+  writeWord(0xFFD9)
+
+  const arr = [255, 216, 255, 224, 0, 16, 74, 70, 73, 70, 0, 1, 2, 0, 0, 100, 0, 100, 0, 0, 255, 219, 0, 67, 0, 16, 11, 12, 14, 12, 10, 16, 14, 13, 14, 18, 17, 16, 19, 24, 40, 26, 24, 22, 22, 24, 49, 35, 37, 29, 40, 58, 51, 61, 60, 57, 51, 56, 55, 64, 72, 92, 78, 64, 68, 87, 69, 55, 56, 80, 109, 81, 87, 95, 98, 103, 104, 103, 62, 77, 113, 121, 112, 100, 120, 92, 101, 103, 99, 255, 219, 0, 67, 1, 17, 18, 18, 24, 21, 24, 47, 26, 26, 47, 99, 66, 56, 66, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 255, 192, 0, 17, 8, 0, 16, 0, 16, 3, 1, 17, 0, 2, 17, 1, 3, 17, 1, 255, 196, 0, 31, 0, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 255, 196, 0, 31, 1, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 255, 196, 0, 181, 16, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125, 1, 2, 3, 0, 4, 17, 5, 18, 33, 49, 65, 6, 19, 81, 97, 7, 34, 113, 20, 50, 129, 145, 161, 8, 35, 66, 177, 193, 21, 82, 209, 240, 36, 51, 98, 114, 130, 9, 10, 22, 23, 24, 25, 26, 37, 38, 39, 40, 41, 42, 52, 53, 54, 55, 56, 57, 58, 67, 68, 69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99, 100, 101, 102, 103, 104, 105, 106, 115, 116, 117, 118, 119, 120, 121, 122, 131, 132, 133, 134, 135, 136, 137, 138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163, 164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 202, 210, 211, 212, 213, 214, 215, 216, 217, 218, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 255, 196, 0, 181, 17, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119, 0, 1, 2, 3, 17, 4, 5, 33, 49, 6, 18, 65, 81, 7, 97, 113, 19, 34, 50, 129, 8, 20, 66, 145, 161, 177, 193, 9, 35, 51, 82, 240, 21, 98, 114, 209, 10, 22, 36, 52, 225, 37, 241, 23, 24, 25, 26, 38, 39, 40, 41, 42, 53, 54, 55, 56, 57, 58, 67, 68, 69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99, 100, 101, 102, 103, 104, 105, 106, 115, 116, 117, 118, 119, 120, 121, 122, 130, 131, 132, 133, 134, 135, 136, 137, 138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163, 164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 202, 210, 211, 212, 213, 214, 215, 216, 217, 218, 226, 227, 228, 229, 230, 231, 232, 233, 234, 242, 243, 244, 245, 246, 247, 248, 249, 250, 255, 218, 0, 12, 3, 1, 0, 2, 17, 3, 17, 0, 63, 0, 198, 175, 48, 251, 176, 160, 2, 128, 10, 0, 255, 217]
+
+  console.log(arr)
+  console.log(data)
+
+  // expect(data).toEqual(arr)
 })

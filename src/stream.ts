@@ -4,7 +4,7 @@ export function useStream() {
 
   function writeBit(v: number) {
     if (nextBit === 0)
-      data.push(v)
+      data.push(0)
 
     data[data.length - 1] |= (v & 1) << (7 - nextBit)
     nextBit = (nextBit + 1) % 8

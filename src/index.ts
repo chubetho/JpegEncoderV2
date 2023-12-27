@@ -19,7 +19,7 @@ export function encode(path: string, quality = 50) {
     dqtC(img.blocks[i].Cr)
   }
 
-  const { data, writeByte, writeWord, writeBits } = useStream()
+  const { getData, writeByte, writeWord, writeBits } = useStream()
 
   // SOI
   writeWord(0xFFD8)
@@ -195,7 +195,7 @@ export function encode(path: string, quality = 50) {
 
   // EOI
   writeWord(0xFFD9)
-  return Buffer.from(data)
+  return Buffer.from(getData())
 }
 
 function generateCodes(t: HuffmanTable) {

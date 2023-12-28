@@ -1,6 +1,6 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`foo 1`] = `
+exports[`small 1`] = `
 {
   "data": [
     255,

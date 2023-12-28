@@ -1,6 +1,8 @@
 import * as fs from 'node:fs'
 
 export function readPpm(path: string) {
+  const t0 = performance.now()
+
   const content = fs.readFileSync(path, 'ascii')
   const lines = content.split('\n')
   const [format, size, _maxColor, ...rest] = lines
@@ -32,6 +34,9 @@ export function readPpm(path: string) {
       image[index++] = v
     }
   }
+
+  const t1 = performance.now()
+  console.log(t1 - t0)
 
   const blockHeight = ~~((imageHeight + 7) / 8)
   const blockWidth = ~~((imageWidth + 7) / 8)

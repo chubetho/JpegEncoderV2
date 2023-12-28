@@ -8,7 +8,7 @@ it('small', () => {
   buffer && writeFileSync('src/output/small.jpg', buffer)
 })
 
-it('big', () => {
+it.only('big', () => {
   const buffer = encode('src/assets/big.ppm')
   buffer && writeFileSync('src/output/big.jpg', buffer)
 })

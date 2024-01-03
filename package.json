@@ -6,15 +6,14 @@
     "start": "bun src/index.ts",
     "test": "bun test --watch",
     "test:update": "bun test --update-snapshots",
-    "lint": "eslint . --fix",
-    "build": "bun build src/index.ts --compile --minify --outfile group5"
+    "lint": "eslint . --fix"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^2.4.5",
+    "@antfu/eslint-config": "^2.6.1",
     "@types/bun": "^1.0.0",
-    "eslint": "^8.55.0"
+    "eslint": "^8.56.0"
   }
 }

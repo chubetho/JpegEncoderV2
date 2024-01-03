@@ -4,7 +4,9 @@ import { dct, dqtC, dqtY } from '../src/transform'
 import { acTableC, acTableY, acTables, dcTableC, dcTableY, dcTables, qTableC, qTableY, zigzag } from '../src/constants'
 import { useStream } from '../src/stream'
 
-export function encode(path: string, quality = 50) {
+const abs = Math.abs
+
+export function encode(path: string) {
   const img = readPpm(path)
 
   for (let i = 0; i < img.blocks.length; i++) {
@@ -33,10 +35,10 @@ export function encode(path: string, quality = 50) {
   writeByte(0x46) // I
   writeByte(0)
   writeByte(1)
-  writeByte(2)
+  writeByte(1)
   writeByte(0)
-  writeWord(100)
-  writeWord(100)
+  writeWord(0x0048)
+  writeWord(0x0048)
   writeByte(0)
   writeByte(0)
 
@@ -77,8 +79,10 @@ export function encode(path: string, quality = 50) {
     writeWord(0xFFC4)
     writeWord(19 + table.offsets[16])
     writeByte(type << 4 | id)
+
     for (let i = 0; i < 16; i++)
       writeByte(table.offsets[i + 1] - table.offsets[i])
+
     for (let i = 0; i < 16; i++) {
       for (let j = table.offsets[i]; j < table.offsets[i + 1]; j++)
         writeByte(table.symbols[j])
@@ -93,11 +97,17 @@ export function encode(path: string, quality = 50) {
   // SOS
   writeWord(0xFFDA)
   writeWord(12)
-  writeByte(3)
-  for (let i = 1; i <= 3; i++) {
-    writeByte(i)
-    writeByte(i === 1 ? 0x00 : 0x11)
-  }
+  writeByte(3) // components
+
+  writeByte(1) // Y
+  writeByte(0x00) // Huffmantable
+
+  writeByte(2) // Cb
+  writeByte(0x11) // Huffmantable
+
+  writeByte(3) // Cr
+  writeByte(0x11) // Huffmantable
+
   writeByte(0)
   writeByte(63)
   writeByte(0)
@@ -120,11 +130,12 @@ export function encode(path: string, quality = 50) {
     const block = img.blocks[b]
     for (let c = 0; c < 3; c++) {
       const component = c === 0 ? block.Y : c === 1 ? block.Cb : block.Cr
+
       // DC
       let coeff = component[0] - dcDiffs[c]
       dcDiffs[c] = component[0]
 
-      let coeffLength = getBitLength(Math.abs(coeff))
+      let coeffLength = getBitLength(abs(coeff))
       if (coeffLength > 11) {
         console.log('dc coefficient length > 11')
         return
@@ -168,9 +179,8 @@ export function encode(path: string, quality = 50) {
           count -= 16
         }
 
-        // find coeff length
         coeff = component[zigzag[i]]
-        coeffLength = getBitLength(Math.abs(coeff))
+        coeffLength = getBitLength(abs(coeff))
         if (coeffLength > 10) {
           console.log('ac coefficient length > 10')
           return
@@ -179,7 +189,6 @@ export function encode(path: string, quality = 50) {
         if (coeff < 0)
           coeff += (1 << coeffLength) - 1
 
-        // find symbol in table
         const symbol = count << 4 | coeffLength
         const symbolCode = getCode(acTables[c], symbol)
         if (!symbolCode) {
@@ -219,6 +228,9 @@ function getBitLength(v: number) {
 }
 
 function getCode(t: HuffmanTable, symbol: number) {
+  if (!t.set)
+    throw new Error('table not set')
+
   let code = 0
   let codelength = 0
 

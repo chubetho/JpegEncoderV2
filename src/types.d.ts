@@ -1,7 +1,4 @@
 interface Block {
-  R: Uint8Array
-  G: Uint8Array
-  B: Uint8Array
   Y: Int32Array
   Cb: Int32Array
   Cr: Int32Array

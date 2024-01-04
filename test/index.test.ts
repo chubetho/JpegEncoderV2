@@ -12,3 +12,8 @@ it('big', () => {
   const buffer = encode('src/assets/big.ppm')
   buffer && writeFileSync('src/output/big.jpg', buffer)
 })
+
+it.skip('nasa', () => {
+  const buffer = encode('src/assets/nasa.ppm')
+  buffer && writeFileSync('src/output/nasa.jpg', buffer)
+})

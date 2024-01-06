@@ -6,8 +6,39 @@ import { useStream } from '../src/stream'
 
 const abs = Math.abs
 
-export function encode(path: string) {
+export function encode(path: string, subsampling = true) {
   const img = readPpm(path)
+
+  if (subsampling) {
+    const blockHeight = img.metadata.blockHeight
+    const blockWidth = img.metadata.blockWidth
+
+    for (let i = 0; i < blockHeight; i += 2) {
+      for (let j = 0; j < blockWidth; j += 2) {
+        const tl = i * blockWidth + j
+        const tr = tl === blockWidth - 1 ? undefined : tl + 1
+        const bl = tl === blockHeight - 1 ? undefined : (i + 1) * blockWidth + j
+        const br = bl ? bl + 1 : undefined
+
+        const source = img.blocks[tl]
+
+        if (tr && img.blocks[tr]) {
+          img.blocks[tr].Cb = Int32Array.from(source.Cb)
+          img.blocks[tr].Cr = Int32Array.from(source.Cr)
+        }
+
+        if (bl && img.blocks[bl]) {
+          img.blocks[bl].Cb = Int32Array.from(source.Cb)
+          img.blocks[bl].Cr = Int32Array.from(source.Cr)
+        }
+
+        if (br && img.blocks[br]) {
+          img.blocks[br].Cb = Int32Array.from(source.Cb)
+          img.blocks[br].Cr = Int32Array.from(source.Cr)
+        }
+      }
+    }
+  }
 
   for (let i = 0; i < img.blocks.length; i++) {
     dct(img.blocks[i].Y)
@@ -63,15 +94,15 @@ export function encode(path: string) {
   writeByte(3) // components
 
   writeByte(1) // Y
-  writeByte(0x11)
+  writeByte(0x11) // 4:4:4
   writeByte(0) // QtY
 
   writeByte(2) // Cb
-  writeByte(0x11)
+  writeByte(0x11) // 4:4:4
   writeByte(1) // QtC
 
   writeByte(3) // Cr
-  writeByte(0x11)
+  writeByte(0x11) // 4:4:4
   writeByte(1) // QtC
 
   // DHT

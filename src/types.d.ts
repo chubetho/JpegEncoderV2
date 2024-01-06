@@ -1,7 +1,7 @@
 interface Block {
-  Y: Int32Array
-  Cb: Int32Array
-  Cr: Int32Array
+  Y: Int16Array
+  Cb: Int16Array
+  Cr: Int16Array
 }
 
 interface Image {

@@ -4,7 +4,7 @@ exports[`read ppm 1`] = `
 {
   "blocks": [
     {
-      "Cb": Int32Array [
+      "Cb": Int16Array [
         -4,
         2,
         -3,
@@ -70,7 +70,7 @@ exports[`read ppm 1`] = `
         -22,
         -21,
       ],
-      "Cr": Int32Array [
+      "Cr": Int16Array [
         -1,
         0,
         6,
@@ -136,7 +136,7 @@ exports[`read ppm 1`] = `
         12,
         5,
       ],
-      "Y": Int32Array [
+      "Y": Int16Array [
         -110,
         -111,
         -105,
@@ -204,7 +204,7 @@ exports[`read ppm 1`] = `
       ],
     },
     {
-      "Cb": Int32Array [
+      "Cb": Int16Array [
         -18,
         -22,
         -6,
@@ -270,7 +270,7 @@ exports[`read ppm 1`] = `
         -9,
         -18,
       ],
-      "Cr": Int32Array [
+      "Cr": Int16Array [
         20,
         23,
         13,
@@ -336,7 +336,7 @@ exports[`read ppm 1`] = `
         6,
         11,
       ],
-      "Y": Int32Array [
+      "Y": Int16Array [
         -50,
         -42,
         -70,
@@ -404,7 +404,7 @@ exports[`read ppm 1`] = `
       ],
     },
     {
-      "Cb": Int32Array [
+      "Cb": Int16Array [
         -7,
         -17,
         -28,
@@ -470,7 +470,7 @@ exports[`read ppm 1`] = `
         0,
         0,
       ],
-      "Cr": Int32Array [
+      "Cr": Int16Array [
         14,
         12,
         16,
@@ -536,7 +536,7 @@ exports[`read ppm 1`] = `
         0,
         0,
       ],
-      "Y": Int32Array [
+      "Y": Int16Array [
         -85,
         -64,
         -36,
@@ -604,7 +604,7 @@ exports[`read ppm 1`] = `
       ],
     },
     {
-      "Cb": Int32Array [
+      "Cb": Int16Array [
         -9,
         -2,
         5,
@@ -670,7 +670,7 @@ exports[`read ppm 1`] = `
         -22,
         -32,
       ],
-      "Cr": Int32Array [
+      "Cr": Int16Array [
         5,
         2,
         -1,
@@ -736,7 +736,7 @@ exports[`read ppm 1`] = `
         6,
         16,
       ],
-      "Y": Int32Array [
+      "Y": Int16Array [
         -79,
         -87,
         -106,
@@ -804,7 +804,7 @@ exports[`read ppm 1`] = `
       ],
     },
     {
-      "Cb": Int32Array [
+      "Cb": Int16Array [
         -29,
         -4,
         5,
@@ -870,7 +870,7 @@ exports[`read ppm 1`] = `
         -4,
         -14,
       ],
-      "Cr": Int32Array [
+      "Cr": Int16Array [
         14,
         10,
         7,
@@ -936,7 +936,7 @@ exports[`read ppm 1`] = `
         0,
         7,
       ],
-      "Y": Int32Array [
+      "Y": Int16Array [
         -59,
         -70,
         -92,
@@ -1004,7 +1004,7 @@ exports[`read ppm 1`] = `
       ],
     },
     {
-      "Cb": Int32Array [
+      "Cb": Int16Array [
         5,
         3,
         -8,
@@ -1070,7 +1070,7 @@ exports[`read ppm 1`] = `
         0,
         0,
       ],
-      "Cr": Int32Array [
+      "Cr": Int16Array [
         0,
         -2,
         0,
@@ -1136,7 +1136,7 @@ exports[`read ppm 1`] = `
         0,
         0,
       ],
-      "Y": Int32Array [
+      "Y": Int16Array [
         -105,
         -115,
         -100,

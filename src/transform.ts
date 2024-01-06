@@ -16,7 +16,7 @@ const s5 = 0.4499881120 // 1 / (4 * cos(5 * pi_16))
 const s6 = 0.6532814838 // 1 / (4 * cos(6 * pi_16))
 const s7 = 1.2814577306 // 1 / (4 * cos(7 * pi_16))
 
-export function dct(X: Int32Array) {
+export function dct(X: Int16Array) {
   for (let i = 0; i < 8; i++) {
     const tmp = i * 8
     const b0 = X[tmp + 0] + X[tmp + 7]
@@ -155,12 +155,12 @@ export function dct(X: Int32Array) {
   return X
 }
 
-export function dqtY(X: Int32Array) {
+export function dqtY(X: Int16Array) {
   for (let i = 0; i < 64; i++)
     X[i] = X[i] / qTableY[i]
 }
 
-export function dqtC(X: Int32Array) {
+export function dqtC(X: Int16Array) {
   for (let i = 0; i < 64; i++)
     X[i] = X[i] / qTableC[i]
 }

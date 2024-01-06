@@ -23,18 +23,18 @@ export function encode(path: string, subsampling = true) {
         const source = img.blocks[tl]
 
         if (tr && img.blocks[tr]) {
-          img.blocks[tr].Cb = Int32Array.from(source.Cb)
-          img.blocks[tr].Cr = Int32Array.from(source.Cr)
+          img.blocks[tr].Cb = Int16Array.from(source.Cb)
+          img.blocks[tr].Cr = Int16Array.from(source.Cr)
         }
 
         if (bl && img.blocks[bl]) {
-          img.blocks[bl].Cb = Int32Array.from(source.Cb)
-          img.blocks[bl].Cr = Int32Array.from(source.Cr)
+          img.blocks[bl].Cb = Int16Array.from(source.Cb)
+          img.blocks[bl].Cr = Int16Array.from(source.Cr)
         }
 
         if (br && img.blocks[br]) {
-          img.blocks[br].Cb = Int32Array.from(source.Cb)
-          img.blocks[br].Cr = Int32Array.from(source.Cr)
+          img.blocks[br].Cb = Int16Array.from(source.Cb)
+          img.blocks[br].Cr = Int16Array.from(source.Cr)
         }
       }
     }

@@ -36,9 +36,9 @@ export function readPpm(path: string) {
   const blockHeight = ~~((imageHeight + 7) / 8)
   const blockWidth = ~~((imageWidth + 7) / 8)
   const blocks = Array.from({ length: blockHeight * blockWidth }, () => ({
-    Y: new Int32Array(64),
-    Cb: new Int32Array(64),
-    Cr: new Int32Array(64),
+    Y: new Int16Array(64),
+    Cb: new Int16Array(64),
+    Cr: new Int16Array(64),
   }))
 
   const clamp = (x: number) => x < -128 ? -128 : x > 127 ? 127 : x

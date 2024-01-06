@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { readPpm } from '../src/ppm'
 import { dct, dqtC, dqtY } from '../src/transform'
-import { acTableC, acTableY, acTables, dcTableC, dcTableY, dcTables, qTableC, qTableY, zigzag } from '../src/constants'
+import { acTableC, acTableY, acTables, channels, dcTableC, dcTableY, dcTables, qTableC, qTableY, zigzag } from '../src/constants'
 import { useStream } from '../src/stream'
 
 const abs = Math.abs
@@ -13,11 +13,11 @@ export function encode(path: string, subsampling = true) {
     const blockHeight = img.metadata.blockHeight
     const blockWidth = img.metadata.blockWidth
 
-    for (let i = 0; i < blockHeight; i += 2) {
-      for (let j = 0; j < blockWidth; j += 2) {
-        const tl = i * blockWidth + j
+    for (let w = 0; w < blockHeight; w += 2) {
+      for (let h = 0; h < blockWidth; h += 2) {
+        const tl = w * blockWidth + h
         const tr = tl === blockWidth - 1 ? undefined : tl + 1
-        const bl = tl === blockHeight - 1 ? undefined : (i + 1) * blockWidth + j
+        const bl = tl === blockHeight - 1 ? undefined : (w + 1) * blockWidth + h
         const br = bl ? bl + 1 : undefined
 
         const source = img.blocks[tl]
@@ -94,15 +94,15 @@ export function encode(path: string, subsampling = true) {
   writeByte(3) // components
 
   writeByte(1) // Y
-  writeByte(0x11) // 4:4:4
+  writeByte(subsampling ? 0x22 : 0x11)
   writeByte(0) // QtY
 
   writeByte(2) // Cb
-  writeByte(0x11) // 4:4:4
+  writeByte(0x11)
   writeByte(1) // QtC
 
   writeByte(3) // Cr
-  writeByte(0x11) // 4:4:4
+  writeByte(0x11)
   writeByte(1) // QtC
 
   // DHT
@@ -143,9 +143,7 @@ export function encode(path: string, subsampling = true) {
   writeByte(63)
   writeByte(0)
 
-  // ECS
-  const dcDiffs = [0, 0, 0]
-
+  // Data
   for (let i = 0; i < 3; i++) {
     if (!dcTables[i].set) {
       generateCodes(dcTables[i])
@@ -157,79 +155,105 @@ export function encode(path: string, subsampling = true) {
     }
   }
 
-  for (let b = 0; b < img.blocks.length; b++) {
-    const block = img.blocks[b]
-    for (let c = 0; c < 3; c++) {
-      const component = c === 0 ? block.Y : c === 1 ? block.Cb : block.Cr
+  const dcDiffs = [0, 0, 0]
 
-      // DC
-      let coeff = component[0] - dcDiffs[c]
-      dcDiffs[c] = component[0]
+  const encodeBlockChannel = (block: Block, c: number) => {
+    const component = block[channels[c]]
 
-      let coeffLength = getBitLength(abs(coeff))
-      if (coeffLength > 11) {
-        console.log('dc coefficient length > 11')
-        return
+    // DC
+    let coeff = component[0] - dcDiffs[c]
+    dcDiffs[c] = component[0]
+
+    let coeffLength = getBitLength(abs(coeff))
+    if (coeffLength > 11) {
+      console.log('dc coefficient length > 11')
+      return
+    }
+    if (coeff < 0)
+      coeff += (1 << coeffLength) - 1
+
+    const dcCode = getCode(dcTables[c], coeffLength)
+    if (!dcCode) {
+      console.log('invalid dc')
+      return
+    }
+    writeBits(dcCode.code, dcCode.codelength)
+    writeBits(coeff, coeffLength)
+
+    // AC
+    for (let i = 1; i < 64; i++) {
+      let count = 0
+      while (i < 64 && component[zigzag[i]] === 0) {
+        count += 1
+        i += 1
       }
-      if (coeff < 0)
-        coeff += (1 << coeffLength) - 1
 
-      const dcCode = getCode(dcTables[c], coeffLength)
-      if (!dcCode) {
-        console.log('invalid dc')
-        return
-      }
-      writeBits(dcCode.code, dcCode.codelength)
-      writeBits(coeff, coeffLength)
-
-      // AC
-      for (let i = 1; i < 64; i++) {
-        let count = 0
-        while (i < 64 && component[zigzag[i]] === 0) {
-          count += 1
-          i += 1
-        }
-
-        if (i === 64) {
-          const acCode = getCode(acTables[c], 0x00)
-          if (!acCode) {
-            console.log('invalid ac')
-            return
-          }
-          writeBits(acCode.code, acCode.codelength)
-          continue
-        }
-
-        while (count >= 16) {
-          const acCode = getCode(acTables[c], 0xF0)
-          if (!acCode) {
-            console.log('invalid ac')
-            return
-          }
-          writeBits(acCode.code, acCode.codelength)
-          count -= 16
-        }
-
-        coeff = component[zigzag[i]]
-        coeffLength = getBitLength(abs(coeff))
-        if (coeffLength > 10) {
-          console.log('ac coefficient length > 10')
-          return
-        }
-
-        if (coeff < 0)
-          coeff += (1 << coeffLength) - 1
-
-        const symbol = count << 4 | coeffLength
-        const symbolCode = getCode(acTables[c], symbol)
-        if (!symbolCode) {
+      if (i === 64) {
+        const acCode = getCode(acTables[c], 0x00)
+        if (!acCode) {
           console.log('invalid ac')
           return
         }
-
-        writeBits(symbolCode.code, symbolCode.codelength)
-        writeBits(coeff, coeffLength)
+        writeBits(acCode.code, acCode.codelength)
+        continue
       }
+
+      while (count >= 16) {
+        const acCode = getCode(acTables[c], 0xF0)
+        if (!acCode) {
+          console.log('invalid ac')
+          return
+        }
+        writeBits(acCode.code, acCode.codelength)
+        count -= 16
+      }
+
+      coeff = component[zigzag[i]]
+      coeffLength = getBitLength(abs(coeff))
+      if (coeffLength > 10) {
+        console.log('ac coefficient length > 10')
+        return
+      }
+
+      if (coeff < 0)
+        coeff += (1 << coeffLength) - 1
+
+      const symbol = count << 4 | coeffLength
+      const symbolCode = getCode(acTables[c], symbol)
+      if (!symbolCode) {
+        console.log('invalid ac')
+        return
+      }
+
+      writeBits(symbolCode.code, symbolCode.codelength)
+      writeBits(coeff, coeffLength)
+    }
+  }
+
+  if (subsampling) {
+    const blockHeight = img.metadata.blockHeight
+    const blockWidth = img.metadata.blockWidth
+    for (let h = 0; h < blockHeight; h += 2) {
+      for (let w = 0; w < blockWidth; w += 2) {
+        const tl = w * blockWidth + h
+        const tr = tl === blockWidth - 1 ? undefined : tl + 1
+        const bl = tl === blockHeight - 1 ? undefined : (w + 1) * blockWidth + h
+        const br = bl ? bl + 1 : undefined
+
+        encodeBlockChannel(img.blocks[tl], 0)
+        tr && encodeBlockChannel(img.blocks[tr], 0)
+        bl && encodeBlockChannel(img.blocks[bl], 0)
+        br && encodeBlockChannel(img.blocks[br], 0)
+        encodeBlockChannel(img.blocks[tl], 1)
+        encodeBlockChannel(img.blocks[tl], 2)
+      }
+    }
+  }
+  else {
+    for (let b = 0; b < img.blocks.length; b++) {
+      const block = img.blocks[b]
+      for (let c = 0; c < 3; c++)
+        encodeBlockChannel(block, c)
     }
   }
 

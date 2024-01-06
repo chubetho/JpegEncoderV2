@@ -8,7 +8,7 @@ it('small', () => {
   buffer && writeFileSync('src/output/small.jpg', buffer)
 })
 
-it.skip('img_1_32', () => {
+it('img_1_32', () => {
   const buffer = encode('src/assets/img_1_32.ppm')
   buffer && writeFileSync('src/output/img_1_32.jpg', buffer)
 })

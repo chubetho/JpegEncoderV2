@@ -25,6 +25,8 @@ export const acTableC: HuffmanTable = {
 export const dcTables = [dcTableY, dcTableC, dcTableC]
 export const acTables = [acTableY, acTableC, acTableC]
 
+export const channels = ['Y', 'Cb', 'Cr'] as const
+
 /* eslint-disable */
 export const zigzag = [
   0,  1,  8,  16, 9,  2,  3,  10,

@@ -4,17 +4,14 @@ export function useStream() {
   let count = 0
 
   function writeBit(v: number) {
-    if (nextBit === 0) {
-      data[count] = 0
+    if (nextBit === 0)
       afterWrite()
-    }
 
     data[count - 1] |= (v & 1) << (7 - nextBit)
     nextBit = (nextBit + 1) % 8
-    if (nextBit === 0 && data[count - 1] === 0xFF) {
-      data[count] = 0
+
+    if (nextBit === 0 && data[count - 1] === 0xFF)
       afterWrite()
-    }
   }
 
   function writeBits(v: number, length: number) {

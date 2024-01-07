@@ -200,25 +200,35 @@ export function encoder(path: string, config?: Config) {
   let lastCbDc = 0
   let lastCrDc = 0
 
-  const encode = (comp: Int16Array, qTable: Uint8Array, dcDiff: number, dcTable: HuffmanTable, acTable: HuffmanTable) => {
+  const encode = (comp: Int16Array, qTable: Uint8Array, lastDc: number, dcTable: HuffmanTable, acTable: HuffmanTable) => {
     dct(comp)
     dqt(comp, qTable)
 
     // DC
-    let coeff = comp[0] - dcDiff
+    let coeff = comp[0] - lastDc
     let coeffLength = getBitLength(abs(coeff))
-    if (coeffLength > 11)
-      throw new Error('dc coefficient length > 11')
 
-    if (coeff < 0)
-      coeff += (1 << coeffLength) - 1
+    if (coeff === 0) {
+      const eob = getCode(dcTable, 0x00)
+      if (!eob)
+        throw new Error('invalid dc')
 
-    const coeffLengthCode = getCode(dcTable, coeffLength)
-    if (!coeffLengthCode)
-      throw new Error('invalid dc')
+      writeBits(eob.code, eob.codelength)
+    }
+    else {
+      if (coeffLength > 11)
+        throw new Error('dc coefficient length > 11')
 
-    writeBits(coeffLengthCode.code, coeffLengthCode.codelength)
-    writeBits(coeff, coeffLength)
+      if (coeff < 0)
+        coeff += (1 << coeffLength) - 1
+
+      const symbol = getCode(dcTable, coeffLength)
+      if (!symbol)
+        throw new Error('invalid dc')
+
+      writeBits(symbol.code, symbol.codelength)
+      writeBits(coeff, coeffLength)
+    }
 
     // AC
     for (let i = 1; i < 64; i++) {
@@ -251,15 +261,11 @@ export function encoder(path: string, config?: Config) {
       if (coeffLength > 10)
         throw new Error('ac coefficient length > 10')
 
-      if (coeff < 0)
-        coeff += (1 << coeffLength) - 1
-
-      const symbol = count << 4 | coeffLength
-      const symbolCode = getCode(acTable, symbol)
-      if (!symbolCode)
+      const symbol = getCode(acTable, count << 4 | coeffLength)
+      if (!symbol)
         throw new Error('invalid ac')
 
-      writeBits(symbolCode.code, symbolCode.codelength)
+      writeBits(symbol.code, symbol.codelength)
       writeBits(coeff, coeffLength)
     }
 

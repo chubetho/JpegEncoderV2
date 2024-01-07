@@ -47,10 +47,6 @@ function read(path: string) {
   }
 }
 
-function rgb2y(r: number, g: number, b: number) { return +0.299 * r + 0.587 * g + 0.114 * b }
-function rgb2cb(r: number, g: number, b: number) { return -0.16874 * r - 0.33126 * g + 0.5 * b }
-function rgb2cr(r: number, g: number, b: number) { return +0.5 * r - 0.41869 * g - 0.08131 * b }
-
 function generateCodes(t: HuffmanTable) {
   let code = 0
   for (let i = 0; i < 16; i++) {
@@ -294,10 +290,10 @@ export function encoder(path: string, config?: Config) {
               const g = pixels[3 * pixelPos + 1]
               const b = pixels[3 * pixelPos + 2]
 
-              Y[deltaY * 8 + deltaX] = rgb2y(r, g, b) - 128
+              Y[deltaY * 8 + deltaX] = 0.299 * r + 0.587 * g + 0.114 * b - 128
               if (!subsampling) {
-                Cb[deltaY * 8 + deltaX] = rgb2cb(r, g, b)
-                Cr[deltaY * 8 + deltaX] = rgb2cr(r, g, b)
+                Cb[deltaY * 8 + deltaX] = -0.1687 * r - 0.3312 * g + 0.5 * b
+                Cr[deltaY * 8 + deltaX] = 0.5 * r - 0.4186 * g - 0.0813 * b
               }
             }
           }
@@ -320,8 +316,8 @@ export function encoder(path: string, config?: Config) {
                 const r = pixels[pixelPos] + pixels[right] + pixels[down] + pixels[downRight]
                 const g = pixels[pixelPos + 1] + pixels[right + 1] + pixels[down + 1] + pixels[downRight + 1]
                 const b = pixels[pixelPos + 2] + pixels[right + 2] + pixels[down + 2] + pixels[downRight + 2]
-                Cb[deltaY * 8 + deltaX] = rgb2cb(r, g, b) / 4
-                Cr[deltaY * 8 + deltaX] = rgb2cr(r, g, b) / 4
+                Cb[deltaY * 8 + deltaX] = (-0.1687 * r - 0.3312 * g + 0.5 * b) / 4
+                Cr[deltaY * 8 + deltaX] = (0.5 * r - 0.4186 * g - 0.0813 * b) / 4
 
                 pixelPos += 2 * 3
                 column += 2

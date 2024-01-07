@@ -102,7 +102,7 @@ export function encoder(path: string, config?: Config) {
   !acTableY.set && generateCodes(acTableY)
   !acTableC.set && generateCodes(acTableC)
 
-  const { image: pixels, width, height } = read(path)
+  const { image, width, height } = read(path)
   const { getData, writeByte, writeWord, writeBits } = useStream()
 
   // SOI
@@ -127,9 +127,11 @@ export function encoder(path: string, config?: Config) {
   // DQT
   writeWord(0xFFDB)
   writeWord(2 + 2 * 65)
+
   writeByte(0)
   for (let i = 0; i < 64; i++)
     writeByte(qTableY[zigzag[i]])
+
   writeByte(1)
   for (let i = 0; i < 64; i++)
     writeByte(qTableC[zigzag[i]])
@@ -156,10 +158,10 @@ export function encoder(path: string, config?: Config) {
   writeByte(1) // QtC
 
   // DHT
-  const writeHuffmanTable = (type: number, id: number, table: HuffmanTable) => {
+  const writeHuffmanTable = (def: number, table: HuffmanTable) => {
     writeWord(0xFFC4)
     writeWord(19 + table.offsets[16])
-    writeByte(type << 4 | id)
+    writeByte(def)
 
     for (let i = 0; i < 16; i++)
       writeByte(table.offsets[i + 1] - table.offsets[i])
@@ -170,10 +172,10 @@ export function encoder(path: string, config?: Config) {
     }
   }
 
-  writeHuffmanTable(0, 0, dcTableY)
-  writeHuffmanTable(0, 1, dcTableC)
-  writeHuffmanTable(1, 0, acTableY)
-  writeHuffmanTable(1, 1, acTableC)
+  writeHuffmanTable(0x00, dcTableY)
+  writeHuffmanTable(0x01, dcTableC)
+  writeHuffmanTable(0x10, acTableY)
+  writeHuffmanTable(0x11, acTableC)
 
   // SOS
   writeWord(0xFFDA)
@@ -181,13 +183,13 @@ export function encoder(path: string, config?: Config) {
   writeByte(3) // components
 
   writeByte(1) // Y
-  writeByte(0x00) // Huffmantable
+  writeByte(0x00)
 
   writeByte(2) // Cb
-  writeByte(0x11) // Huffmantable
+  writeByte(0x11)
 
   writeByte(3) // Cr
-  writeByte(0x11) // Huffmantable
+  writeByte(0x11)
 
   writeByte(0)
   writeByte(63)
@@ -204,7 +206,6 @@ export function encoder(path: string, config?: Config) {
 
     // DC
     let coeff = comp[0] - dcDiff
-
     let coeffLength = getBitLength(abs(coeff))
     if (coeffLength > 11)
       throw new Error('dc coefficient length > 11')
@@ -286,9 +287,9 @@ export function encoder(path: string, config?: Config) {
               const pixelPos = row * width + column
               if (column < maxWidth)
                 column++
-              const r = pixels[3 * pixelPos]
-              const g = pixels[3 * pixelPos + 1]
-              const b = pixels[3 * pixelPos + 2]
+              const r = image[3 * pixelPos]
+              const g = image[3 * pixelPos + 1]
+              const b = image[3 * pixelPos + 2]
 
               Y[deltaY * 8 + deltaX] = 0.299 * r + 0.587 * g + 0.114 * b - 128
               if (!subsampling) {
@@ -299,32 +300,32 @@ export function encoder(path: string, config?: Config) {
           }
 
           lastYDc = encode(Y, qTableY, lastYDc, dcTableY, acTableY)
-          YCount++
 
           if (subsampling) {
+            YCount++
             for (let deltaY = 0; deltaY < 8; deltaY++) {
               const row = min(mcuY + 2 * deltaY, maxHeight)
               let column = mcuX
-              let pixelPos = (row * width + column) * 3
+              let tl = (row * width + column) * 3
               const rowStep = row < maxHeight ? 3 * width : 0
               let columnStep = column < maxWidth ? 3 : 0
               for (let deltaX = 0; deltaX < 8; deltaX++) {
-                const right = pixelPos + columnStep
-                const down = pixelPos + rowStep
-                const downRight = pixelPos + columnStep + rowStep
+                const tr = tl + columnStep
+                const bl = tl + rowStep
+                const br = tl + columnStep + rowStep
 
-                const r = pixels[pixelPos] + pixels[right] + pixels[down] + pixels[downRight]
-                const g = pixels[pixelPos + 1] + pixels[right + 1] + pixels[down + 1] + pixels[downRight + 1]
-                const b = pixels[pixelPos + 2] + pixels[right + 2] + pixels[down + 2] + pixels[downRight + 2]
+                const r = image[tl] + image[tr] + image[bl] + image[br]
+                const g = image[tl + 1] + image[tr + 1] + image[bl + 1] + image[br + 1]
+                const b = image[tl + 2] + image[tr + 2] + image[bl + 2] + image[br + 2]
                 Cb[deltaY * 8 + deltaX] = (-0.1687 * r - 0.3312 * g + 0.5 * b) / 4
                 Cr[deltaY * 8 + deltaX] = (0.5 * r - 0.4186 * g - 0.0813 * b) / 4
 
-                pixelPos += 2 * 3
+                tl += 2 * 3
                 column += 2
 
                 if (column >= maxWidth) {
                   columnStep = 0
-                  pixelPos = ((row + 1) * width - 1) * 3
+                  tl = ((row + 1) * width - 1) * 3
                 }
               }
             }

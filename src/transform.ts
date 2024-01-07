@@ -1,5 +1,3 @@
-import { qTableC, qTableY } from './constants'
-
 const m0 = 0.923879532 // cos(2 * pi_16)
 const m1 = 0.707106780 // cos(4 * pi_16)
 const m5 = 0.382683431 // cos(6 * pi_16)
@@ -153,16 +151,6 @@ export function dct(X: Int16Array) {
   }
 
   return X
-}
-
-export function dqtY(X: Int16Array) {
-  for (let i = 0; i < 64; i++)
-    X[i] = X[i] / qTableY[i]
-}
-
-export function dqtC(X: Int16Array) {
-  for (let i = 0; i < 64; i++)
-    X[i] = X[i] / qTableC[i]
 }
 
 export function dqt(X: Int16Array, t: Uint8Array) {

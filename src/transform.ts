@@ -164,3 +164,8 @@ export function dqtC(X: Int16Array) {
   for (let i = 0; i < 64; i++)
     X[i] = X[i] / qTableC[i]
 }
+
+export function dqt(X: Int16Array, t: Uint8Array) {
+  for (let i = 0; i < 64; i++)
+    X[i] = X[i] / t[i]
+}

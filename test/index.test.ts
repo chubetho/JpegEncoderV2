@@ -1,24 +1,47 @@
 import { writeFileSync } from 'node:fs'
 import { expect, it } from 'bun:test'
-import { encode } from '../src'
+import { encoder } from '../src'
 
 it('small', () => {
-  const buffer = encode('src/assets/small.ppm')
+  const buffer = encoder('src/assets/small.ppm', { subsampling: false })
   expect(buffer).toMatchSnapshot()
-  buffer && writeFileSync('src/output/small.jpg', buffer)
+  writeFileSync('src/output/small.jpg', buffer)
 })
 
-it('img_1_32', () => {
-  const buffer = encode('src/assets/img_1_32.ppm')
-  buffer && writeFileSync('src/output/img_1_32.jpg', buffer)
+it('small_sub', () => {
+  const buffer = encoder('src/assets/small.ppm', { subsampling: true })
+  expect(buffer).toMatchSnapshot()
+  writeFileSync('src/output/small_sub.jpg', buffer)
+})
+
+it('medium', () => {
+  const buffer = encoder('src/assets/medium.ppm', { subsampling: false })
+  expect(buffer).toMatchSnapshot()
+  writeFileSync('src/output/medium.jpg', buffer)
+})
+
+it('medium_sub', () => {
+  const buffer = encoder('src/assets/medium.ppm', { subsampling: true })
+  expect(buffer).toMatchSnapshot()
+  writeFileSync('src/output/medium_sub.jpg', buffer)
 })
 
 it.skip('big', () => {
-  const buffer = encode('src/assets/big.ppm', false)
-  buffer && writeFileSync('src/output/big.jpg', buffer)
+  const buffer = encoder('src/assets/big.ppm', { subsampling: false })
+  writeFileSync('src/output/big.jpg', buffer)
+})
+
+it.skip('big_sub', () => {
+  const buffer = encoder('src/assets/big.ppm', { subsampling: true })
+  writeFileSync('src/output/big_sub.jpg', buffer)
 })
 
 it.skip('nasa', () => {
-  const buffer = encode('src/assets/nasa.ppm')
-  buffer && writeFileSync('src/output/nasa.jpg', buffer)
+  const buffer = encoder('src/assets/nasa.ppm', { subsampling: false })
+  writeFileSync('src/output/nasa.jpg', buffer)
+})
+
+it.skip('nasa_sub', () => {
+  const buffer = encoder('src/assets/nasa.ppm', { subsampling: true })
+  writeFileSync('src/output/nasa_sub.jpg', buffer)
 })

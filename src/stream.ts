@@ -5,13 +5,13 @@ export function useStream() {
 
   function writeBit(v: number) {
     if (nextBit === 0)
-      afterWrite()
+      update()
 
     data[count - 1] |= (v & 1) << (7 - nextBit)
     nextBit = (nextBit + 1) % 8
 
     if (nextBit === 0 && data[count - 1] === 0xFF)
-      afterWrite()
+      update()
   }
 
   function writeBits(v: number, length: number) {
@@ -21,7 +21,7 @@ export function useStream() {
 
   function writeByte(v: number) {
     data[count] = v
-    afterWrite()
+    update()
   }
 
   function writeWord(v: number) {
@@ -33,7 +33,7 @@ export function useStream() {
     return data.subarray(0, count)
   }
 
-  function afterWrite() {
+  function update() {
     count++
     if (count >= data.length) {
       const _data = new Uint8Array(count * 2)

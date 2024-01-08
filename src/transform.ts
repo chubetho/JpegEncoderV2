@@ -155,5 +155,5 @@ export function dct(X: Int16Array) {
 
 export function dqt(X: Int16Array, t: Uint8Array) {
   for (let i = 0; i < 64; i++)
-    X[i] = X[i] / t[i]
+    X[i] /= t[i]
 }

@@ -85,6 +85,8 @@ function getCode(t: HuffmanTable, symbol: number) {
       return { code, codelength }
     }
   }
+
+  throw new Error('cant find symbol')
 }
 
 interface Config {
@@ -210,9 +212,6 @@ export function encoder(path: string, config?: Config) {
 
     if (coeff === 0) {
       const eob = getCode(dcTable, 0x00)
-      if (!eob)
-        throw new Error('invalid dc')
-
       writeBits(eob.code, eob.codelength)
     }
     else {
@@ -222,11 +221,8 @@ export function encoder(path: string, config?: Config) {
       if (coeff < 0)
         coeff += (1 << coeffLength) - 1
 
-      const symbol = getCode(dcTable, coeffLength)
-      if (!symbol)
-        throw new Error('invalid dc')
-
-      writeBits(symbol.code, symbol.codelength)
+      const { code, codelength } = getCode(dcTable, coeffLength)
+      writeBits(code, codelength)
       writeBits(coeff, coeffLength)
     }
 
@@ -239,20 +235,14 @@ export function encoder(path: string, config?: Config) {
       }
 
       if (i === 64) {
-        const eob = getCode(acTable, 0x00)
-        if (!eob)
-          throw new Error('invalid ac')
-
-        writeBits(eob.code, eob.codelength)
+        const { code, codelength } = getCode(acTable, 0x00)
+        writeBits(code, codelength)
         continue
       }
 
       while (count >= 16) {
-        const xf0 = getCode(acTable, 0xF0)
-        if (!xf0)
-          throw new Error('invalid ac')
-
-        writeBits(xf0.code, xf0.codelength)
+        const { code, codelength } = getCode(acTable, 0xF0)
+        writeBits(code, codelength)
         count -= 16
       }
 
@@ -261,11 +251,8 @@ export function encoder(path: string, config?: Config) {
       if (coeffLength > 10)
         throw new Error('ac coefficient length > 10')
 
-      const symbol = getCode(acTable, count << 4 | coeffLength)
-      if (!symbol)
-        throw new Error('invalid ac')
-
-      writeBits(symbol.code, symbol.codelength)
+      const { code, codelength } = getCode(acTable, count << 4 | coeffLength)
+      writeBits(code, codelength)
       writeBits(coeff, coeffLength)
     }
 
@@ -274,7 +261,7 @@ export function encoder(path: string, config?: Config) {
 
   const maxWidth = width - 1
   const maxHeight = height - 1
-  const mcuSize = subsampling ? 16 : 8
+  const size = subsampling ? 16 : 8
 
   const Y = new Int16Array(64)
   const Cb = new Int16Array(64)
@@ -282,25 +269,25 @@ export function encoder(path: string, config?: Config) {
 
   let YCount = 0
 
-  for (let mcuY = 0; mcuY < height; mcuY += mcuSize) {
-    for (let mcuX = 0; mcuX < width; mcuX += mcuSize) {
-      for (let blockY = 0; blockY < mcuSize; blockY += 8) {
-        for (let blockX = 0; blockX < mcuSize; blockX += 8) {
-          for (let deltaY = 0; deltaY < 8; deltaY++) {
-            let column = min(mcuX + blockX, maxWidth)
-            const row = min(mcuY + blockY + deltaY, maxHeight)
-            for (let deltaX = 0; deltaX < 8; deltaX++) {
-              const pixelPos = row * width + column
+  for (let h = 0; h < height; h += size) {
+    for (let w = 0; w < width; w += size) {
+      for (let blockY = 0; blockY < size; blockY += 8) {
+        for (let blockX = 0; blockX < size; blockX += 8) {
+          for (let pixelY = 0; pixelY < 8; pixelY++) {
+            let column = min(w + blockX, maxWidth)
+            const row = min(h + blockY + pixelY, maxHeight)
+            for (let pixelX = 0; pixelX < 8; pixelX++) {
+              const pixel = row * width + column
               if (column < maxWidth)
                 column++
-              const r = image[3 * pixelPos]
-              const g = image[3 * pixelPos + 1]
-              const b = image[3 * pixelPos + 2]
+              const r = image[3 * pixel]
+              const g = image[3 * pixel + 1]
+              const b = image[3 * pixel + 2]
 
-              Y[deltaY * 8 + deltaX] = 0.299 * r + 0.587 * g + 0.114 * b - 128
+              Y[pixelY * 8 + pixelX] = 0.299 * r + 0.587 * g + 0.114 * b - 128
               if (!subsampling) {
-                Cb[deltaY * 8 + deltaX] = -0.1687 * r - 0.3312 * g + 0.5 * b
-                Cr[deltaY * 8 + deltaX] = 0.5 * r - 0.4186 * g - 0.0813 * b
+                Cb[pixelY * 8 + pixelX] = -0.1687 * r - 0.3312 * g + 0.5 * b
+                Cr[pixelY * 8 + pixelX] = 0.5 * r - 0.4186 * g - 0.0813 * b
               }
             }
           }
@@ -310,8 +297,8 @@ export function encoder(path: string, config?: Config) {
           if (subsampling) {
             YCount++
             for (let deltaY = 0; deltaY < 8; deltaY++) {
-              const row = min(mcuY + 2 * deltaY, maxHeight)
-              let column = mcuX
+              const row = min(h + 2 * deltaY, maxHeight)
+              let column = w
               let tl = (row * width + column) * 3
               const rowStep = row < maxHeight ? 3 * width : 0
               let columnStep = column < maxWidth ? 3 : 0
@@ -335,12 +322,14 @@ export function encoder(path: string, config?: Config) {
                 }
               }
             }
+
             if (YCount === 4) {
               lastCbDc = encode(Cb, qTableC, lastCbDc, dcTableC, acTableC)
               lastCrDc = encode(Cr, qTableC, lastCrDc, dcTableC, acTableC)
               YCount = 0
             }
           }
+
           else {
             lastCbDc = encode(Cb, qTableC, lastCbDc, dcTableC, acTableC)
             lastCrDc = encode(Cr, qTableC, lastCrDc, dcTableC, acTableC)

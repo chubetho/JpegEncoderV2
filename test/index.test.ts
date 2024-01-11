@@ -2,13 +2,13 @@ import { writeFileSync } from 'node:fs'
 import { expect, it } from 'bun:test'
 import { encoder } from '../src'
 
-it.skip('small', () => {
+it('small', () => {
   const buffer = encoder('src/assets/small.ppm', { subsampling: false })
   expect(buffer).toMatchSnapshot()
   writeFileSync('src/output/small.jpg', buffer)
 })
 
-it.skip('small_sub', () => {
+it('small_sub', () => {
   const buffer = encoder('src/assets/small.ppm', { subsampling: true })
   expect(buffer).toMatchSnapshot()
   writeFileSync('src/output/small_sub.jpg', buffer)
@@ -20,7 +20,7 @@ it('medium', () => {
   writeFileSync('src/output/medium.jpg', buffer)
 })
 
-it.skip('medium_sub', () => {
+it('medium_sub', () => {
   const buffer = encoder('src/assets/medium.ppm', { subsampling: true })
   expect(buffer).toMatchSnapshot()
   writeFileSync('src/output/medium_sub.jpg', buffer)

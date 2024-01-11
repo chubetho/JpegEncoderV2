@@ -251,6 +251,9 @@ export function encoder(path: string, config?: Config) {
       if (coeffLength > 10)
         throw new Error('ac coefficient length > 10')
 
+      if (coeff < 0)
+        coeff += (1 << coeffLength) - 1
+
       const { code, codelength } = getCode(acTable, count << 4 | coeffLength)
       writeBits(code, codelength)
       writeBits(coeff, coeffLength)

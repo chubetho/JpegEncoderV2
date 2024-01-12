@@ -20,7 +20,7 @@ function read(path: string) {
   if (maxColor !== 255)
     throw new Error('Invalid ppm')
 
-  const image = new Uint8Array(width * height * 3)
+  const img = new Uint8Array(width * height * 3)
   let index = 0
 
   for (let l = 0; l < rest.length; l++) {
@@ -36,12 +36,12 @@ function read(path: string) {
       if (Number.isNaN(v) || v < 0 || v > maxColor)
         throw new Error('Invalid ppm')
 
-      image[index++] = v
+      img[index++] = v
     }
   }
 
   return {
-    image,
+    img,
     width,
     height,
   }
@@ -89,6 +89,10 @@ function getCode(t: HuffmanTable, symbol: number) {
   throw new Error('cant find symbol')
 }
 
+function rgb2y(r: number, g: number, b: number) { return 0.299 * r + 0.587 * g + 0.114 * b - 128 }
+function rgb2cb(r: number, g: number, b: number) { return -0.1687 * r - 0.3312 * g + 0.5 * b }
+function rgb2cr(r: number, g: number, b: number) { return 0.5 * r - 0.4186 * g - 0.0813 * b }
+
 interface Config {
   subsampling?: boolean
 }
@@ -104,7 +108,7 @@ export function encoder(path: string, config?: Config) {
   !acTableY.set && generateCodes(acTableY)
   !acTableC.set && generateCodes(acTableC)
 
-  const { image, width, height } = read(path)
+  const { img, width, height } = read(path)
   const { getData, writeByte, writeWord, writeBits } = useStream()
 
   // SOI
@@ -211,8 +215,8 @@ export function encoder(path: string, config?: Config) {
     let coeffLength = getBitLength(abs(coeff))
 
     if (coeff === 0) {
-      const eob = getCode(dcTable, 0x00)
-      writeBits(eob.code, eob.codelength)
+      const { code, codelength } = getCode(dcTable, 0x00)
+      writeBits(code, codelength)
     }
     else {
       if (coeffLength > 11)
@@ -272,26 +276,30 @@ export function encoder(path: string, config?: Config) {
 
   let YCount = 0
 
-  for (let h = 0; h < height; h += size) {
-    for (let w = 0; w < width; w += size) {
+  for (let mcuY = 0; mcuY < height; mcuY += size) {
+    for (let mcuX = 0; mcuX < width; mcuX += size) {
       for (let blockY = 0; blockY < size; blockY += 8) {
         for (let blockX = 0; blockX < size; blockX += 8) {
-          for (let pixelY = 0; pixelY < 8; pixelY++) {
-            let column = min(w + blockX, maxWidth)
-            const row = min(h + blockY + pixelY, maxHeight)
-            for (let pixelX = 0; pixelX < 8; pixelX++) {
-              const pixel = row * width + column
-              if (column < maxWidth)
-                column++
-              const r = image[3 * pixel]
-              const g = image[3 * pixel + 1]
-              const b = image[3 * pixel + 2]
+          for (let compY = 0; compY < 8; compY++) {
+            const pixelY = min(mcuY + blockY + compY, maxHeight)
+            let pixelX = min(mcuX + blockX, maxWidth)
 
-              Y[pixelY * 8 + pixelX] = 0.299 * r + 0.587 * g + 0.114 * b - 128
-              if (!subsampling) {
-                Cb[pixelY * 8 + pixelX] = -0.1687 * r - 0.3312 * g + 0.5 * b
-                Cr[pixelY * 8 + pixelX] = 0.5 * r - 0.4186 * g - 0.0813 * b
-              }
+            for (let compX = 0; compX < 8; compX++) {
+              const pixelIndex = (pixelY * width + pixelX) * 3
+              if (pixelX < maxWidth)
+                pixelX++
+
+              const r = img[pixelIndex]
+              const g = img[pixelIndex + 1]
+              const b = img[pixelIndex + 2]
+
+              const compIndex = compY * 8 + compX
+              Y[compIndex] = rgb2y(r, g, b)
+              if (subsampling)
+                continue
+
+              Cb[compIndex] = rgb2cb(r, g, b)
+              Cr[compIndex] = rgb2cr(r, g, b)
             }
           }
 
@@ -299,40 +307,40 @@ export function encoder(path: string, config?: Config) {
 
           if (subsampling) {
             YCount++
-            for (let deltaY = 0; deltaY < 8; deltaY++) {
-              const row = min(h + 2 * deltaY, maxHeight)
-              let column = w
-              let tl = (row * width + column) * 3
-              const rowStep = row < maxHeight ? 3 * width : 0
-              let columnStep = column < maxWidth ? 3 : 0
-              for (let deltaX = 0; deltaX < 8; deltaX++) {
-                const tr = tl + columnStep
+            if (YCount !== 4)
+              continue
+
+            YCount = 0
+
+            for (let compY = 0; compY < 8; compY++) {
+              const pixelY = min(mcuY + 2 * compY, maxHeight)
+              let pixelX = mcuX
+
+              const rowStep = pixelY < maxHeight ? 3 * width : 0
+              const colStep = pixelX < maxWidth ? 3 : 0
+
+              let tl = (pixelY * width + pixelX) * 3
+              for (let compX = 0; compX < 8; compX++) {
+                const tr = tl + colStep
                 const bl = tl + rowStep
-                const br = tl + columnStep + rowStep
+                const br = tl + colStep + rowStep
 
-                const r = image[tl] + image[tr] + image[bl] + image[br]
-                const g = image[tl + 1] + image[tr + 1] + image[bl + 1] + image[br + 1]
-                const b = image[tl + 2] + image[tr + 2] + image[bl + 2] + image[br + 2]
-                Cb[deltaY * 8 + deltaX] = (-0.1687 * r - 0.3312 * g + 0.5 * b) / 4
-                Cr[deltaY * 8 + deltaX] = (0.5 * r - 0.4186 * g - 0.0813 * b) / 4
+                const r = img[tl] + img[tr] + img[bl] + img[br]
+                const g = img[tl + 1] + img[tr + 1] + img[bl + 1] + img[br + 1]
+                const b = img[tl + 2] + img[tr + 2] + img[bl + 2] + img[br + 2]
 
-                tl += 2 * 3
-                column += 2
+                const compIndex = compY * 8 + compX
+                Cb[compIndex] = rgb2cb(r, g, b) / 4
+                Cr[compIndex] = rgb2cr(r, g, b) / 4
 
-                if (column >= maxWidth) {
-                  columnStep = 0
-                  tl = ((row + 1) * width - 1) * 3
-                }
+                tl += 6
+                pixelX += 2
               }
             }
 
-            if (YCount === 4) {
-              lastCbDc = encode(Cb, qTableC, lastCbDc, dcTableC, acTableC)
-              lastCrDc = encode(Cr, qTableC, lastCrDc, dcTableC, acTableC)
-              YCount = 0
-            }
+            lastCbDc = encode(Cb, qTableC, lastCbDc, dcTableC, acTableC)
+            lastCrDc = encode(Cr, qTableC, lastCrDc, dcTableC, acTableC)
           }
-
           else {
             lastCbDc = encode(Cb, qTableC, lastCbDc, dcTableC, acTableC)
             lastCrDc = encode(Cr, qTableC, lastCrDc, dcTableC, acTableC)

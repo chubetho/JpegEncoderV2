@@ -1,4 +1,4 @@
-import * as fs from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { Buffer } from 'node:buffer'
 import { useStream } from './stream'
 import { acTableC, acTableY, dcTableC, dcTableY, qTableC, qTableY, zigzag } from './constants'
@@ -8,7 +8,7 @@ const min = Math.min
 const abs = Math.abs
 
 function read(path: string) {
-  const content = fs.readFileSync(path, 'ascii')
+  const content = readFileSync(path, 'ascii')
   const lines = content.split('\n')
   const [format, size, _maxColor, ...rest] = lines
   const [width, height] = size.trim().split(' ').map(Number)
@@ -305,7 +305,11 @@ export function encoder(path: string, config?: Config) {
 
           lastYDc = encode(Y, qTableY, lastYDc, dcTableY, acTableY)
 
-          if (subsampling) {
+          if (subsampling === false) {
+            lastCbDc = encode(Cb, qTableC, lastCbDc, dcTableC, acTableC)
+            lastCrDc = encode(Cr, qTableC, lastCrDc, dcTableC, acTableC)
+          }
+          else {
             YCount++
             if (YCount !== 4)
               continue
@@ -314,7 +318,7 @@ export function encoder(path: string, config?: Config) {
 
             for (let compY = 0; compY < 8; compY++) {
               const pixelY = min(mcuY + 2 * compY, maxHeight)
-              let pixelX = mcuX
+              const pixelX = mcuX
 
               const rowStep = pixelY < maxHeight ? 3 * width : 0
               const colStep = pixelX < maxWidth ? 3 : 0
@@ -334,14 +338,9 @@ export function encoder(path: string, config?: Config) {
                 Cr[compIndex] = rgb2cr(r, g, b) / 4
 
                 tl += 6
-                pixelX += 2
               }
             }
 
-            lastCbDc = encode(Cb, qTableC, lastCbDc, dcTableC, acTableC)
-            lastCrDc = encode(Cr, qTableC, lastCrDc, dcTableC, acTableC)
-          }
-          else {
             lastCbDc = encode(Cb, qTableC, lastCbDc, dcTableC, acTableC)
             lastCrDc = encode(Cr, qTableC, lastCrDc, dcTableC, acTableC)
           }

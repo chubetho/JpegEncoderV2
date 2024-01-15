@@ -5,7 +5,8 @@
   "scripts": {
     "test": "bun test --watch",
     "test:update": "bun test --update-snapshots --watch",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "build": "bun build --entry src/index.ts --target bun --minify --outdir ./dist"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
